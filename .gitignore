@@ -1,0 +1,31 @@
+# Dependencias
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Compilaciones nativas
+ios/
+android/
+*.ipa
+*.apk
+*.aab
+
+# Secretos: nunca subir credenciales al repositorio
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Sistema y editores
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
