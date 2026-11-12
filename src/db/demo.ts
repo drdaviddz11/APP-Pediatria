@@ -51,6 +51,7 @@ function consulta(diasAtras: number, datos: Partial<ConsultaEntrada>): ConsultaE
     tallaCm: null,
     tipoMedicion: null,
     perimetroCefalicoCm: null,
+    edema: false,
     diagnosticos: '',
     estudiosSolicitados: '',
     tratamiento: '',

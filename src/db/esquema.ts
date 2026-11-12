@@ -109,6 +109,11 @@ const MIGRACIONES: string[] = [
     SELECT RAISE(ABORT, 'Los expedientes reales no se eliminan desde la app.');
   END;
   `,
+
+  // Versión 2: edema bilateral (la OMS no calcula indicadores de peso si hay edema)
+  `
+  ALTER TABLE consultas ADD COLUMN edema INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

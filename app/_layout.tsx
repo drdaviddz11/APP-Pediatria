@@ -28,6 +28,7 @@ export default function Raiz() {
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />
           <Stack.Screen name="pacientes/[id]/historia" options={{ title: 'Historia clínica' }} />
           <Stack.Screen name="pacientes/[id]/consulta-nueva" options={{ title: 'Nueva consulta' }} />
+          <Stack.Screen name="pacientes/[id]/crecimiento" options={{ title: 'Gráficas de crecimiento' }} />
           <Stack.Screen name="consultas/[id]" options={{ title: 'Consulta' }} />
         </Stack>
       </SQLiteProvider>

@@ -23,7 +23,9 @@ import {
   Problema,
   validarMediciones,
 } from '../../../src/domain/validacion';
-import { Boton, Campo, Cargando, ListaProblemas, PantallaFormulario, Seccion, Selector, estilos } from '../../../src/ui/componentes';
+import { alertasTendencia, evaluarConsulta } from '../../../src/crecimiento/consulta';
+import { Boton, Campo, Cargando, Interruptor, ListaProblemas, PantallaFormulario, Seccion, Selector, estilos } from '../../../src/ui/componentes';
+import { EvaluacionNutricional } from '../../../src/ui/EvaluacionNutricional';
 
 interface Textos {
   motivo: string;
@@ -76,6 +78,7 @@ export default function NuevaConsulta() {
   const [inicio] = useState(() => new Date()); // fecha y hora de la consulta
   const [m, setM] = useState<MedicionesFormulario>(MEDICIONES_VACIAS);
   const [t, setT] = useState<Textos>(TEXTOS_VACIOS);
+  const [edema, setEdema] = useState(false);
   const [problemas, setProblemas] = useState<Problema[]>([]);
   const [guardando, setGuardando] = useState(false);
 
@@ -95,6 +98,19 @@ export default function NuevaConsulta() {
 
   // Sugerir el tipo de medición según la edad (OMS: acostado < 24 meses, de pie desde 24 meses).
   const tipoSugerido: TipoMedicion | '' = edad ? (edad.totalMeses < 24 ? 'acostado' : 'de_pie') : '';
+
+  // Evaluación OMS en vivo mientras se escriben las medidas.
+  const tallaActual = num(m.tallaCm);
+  const evaluacion = evaluarConsulta(paciente, {
+    fechaHora: inicio.toISOString(),
+    pesoKg: num(m.pesoKg),
+    tallaCm: tallaActual,
+    tipoMedicion: tallaActual == null ? null : m.tipoMedicion || tipoSugerido || null,
+    perimetroCefalicoCm: num(m.perimetroCefalicoCm),
+    edema,
+  });
+  const evaluacionAnterior = anterior ? evaluarConsulta(paciente, anterior) : null;
+  const alertas = alertasTendencia(evaluacionAnterior, evaluacion);
 
   const cambiarM = (campo: keyof MedicionesFormulario) => (v: string) => setM((prev) => ({ ...prev, [campo]: v }));
   const cambiarT = (campo: keyof Textos) => (v: string) => setT((prev) => ({ ...prev, [campo]: v }));
@@ -141,6 +157,7 @@ export default function NuevaConsulta() {
         tallaCm: talla,
         tipoMedicion: talla == null ? null : m.tipoMedicion || tipoSugerido || null,
         perimetroCefalicoCm: num(m.perimetroCefalicoCm),
+        edema,
         diagnosticos: t.diagnosticos,
         estudiosSolicitados: t.estudiosSolicitados,
         tratamiento: t.tratamiento,
@@ -216,7 +233,11 @@ export default function NuevaConsulta() {
           keyboardType="decimal-pad"
           problema={problemaDe('perimetroCefalicoCm')}
         />
-        <Text style={estilos.suave}>La evaluación nutricional con puntajes Z y percentiles OMS se agregará en la siguiente fase.</Text>
+        <Interruptor etiqueta="Edema bilateral con fóvea" valor={edema} alCambiar={setEdema} />
+      </Seccion>
+
+      <Seccion titulo="Evaluación nutricional (OMS)">
+        <EvaluacionNutricional evaluacion={evaluacion} alertas={alertas} />
       </Seccion>
 
       <Seccion titulo="Signos vitales">

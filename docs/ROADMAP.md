@@ -2,7 +2,7 @@
 
 Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que se puede probar en el teléfono.
 
-## Fase 1 — Expedientes (actual)
+## Fase 1 — Expedientes
 
 - [x] Proyecto Expo (SDK 58) + TypeScript compatible con Expo Go del App Store.
 - [x] Base de datos local con migraciones.
@@ -11,19 +11,20 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Consultas inalterables con notas aclaratorias.
 - [x] Alertas de datos improbables y de unidades.
 - [x] Pacientes de demostración ficticios.
-- [ ] Prueba en iPhone por el médico y ajustes de uso real.
+- [x] Prueba en iPhone por el médico.
 
-## Fase 2 — Evaluación nutricional
+## Fase 2 — Evaluación nutricional (actual)
 
-- [ ] Cargar las tablas LMS oficiales de la OMS (0–5 años: peso/edad, longitud-talla/edad, peso/longitud, peso/talla, IMC/edad, perímetro cefálico/edad; 5–19 años: talla/edad, IMC/edad, peso/edad hasta 10 años), obtenidas de los archivos publicados por la OMS, sin transcribir a mano.
-- [ ] Cálculo de puntaje Z y percentil con el método LMS, incluido el ajuste OMS para |Z| > 3 en los indicadores de peso.
-- [ ] Respetar los límites de edad de cada indicador y la diferencia acostado/de pie (0.7 cm).
-- [ ] Edad corregida en prematuros según el protocolo que el médico adopte.
-- [ ] Interpretación con puntos de corte OMS, indicando el indicador y la referencia usada; siempre como apoyo, sujeta a revisión médica.
-- [ ] Pruebas automáticas contra los valores de ejemplo publicados por la OMS (WHO Anthro).
-- [ ] Gráficas longitudinales con las curvas oficiales.
-- [ ] Alertas de caídas importantes de puntaje Z.
-- [ ] Decidir si se usarán referencias CDC y en qué casos.
+- [x] Tablas LMS oficiales de la OMS 2006 (0–5 años) y 2007 (5–19 años), tomadas de los repositorios oficiales de la OMS.
+- [x] Puntaje Z y percentil con el método LMS, ajuste |Z| > 3, ajuste de 0.7 cm, límites de edad y talla de cada indicador.
+- [x] Edad corregida en prematuros (< 37 semanas) hasta los 24 meses.
+- [x] Interpretación con puntos de corte OMS, indicando indicador y referencia; con aviso de que requiere valoración médica.
+- [x] Edema bilateral: excluye los indicadores basados en peso, como la OMS.
+- [x] Validación contra los resultados del software de la OMS (ver [VALIDACION.md](VALIDACION.md)).
+- [x] Gráficas con curvas OMS en puntajes Z o percentiles y mediciones del paciente.
+- [x] Alertas de caída de puntaje Z y de paso por debajo de −2 DE.
+- [ ] Revisión médica de interpretaciones y alertas.
+- [ ] Decidir curvas para prematuros antes de 40 semanas corregidas y uso de referencias CDC.
 
 ## Fase 3 — Panel principal y agenda
 

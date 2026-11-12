@@ -22,7 +22,8 @@
     "react-dom": "19.3.0",
     "react-native": "~0.88.0",
     "react-native-safe-area-context": "*",
-    "react-native-screens": "*"
+    "react-native-screens": "*",
+    "react-native-svg": "*"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

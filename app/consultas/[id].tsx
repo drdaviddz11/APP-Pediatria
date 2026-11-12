@@ -4,11 +4,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import { agregarNota, listarNotas, obtenerConsulta } from '../../src/db/consultas';
+import { alertasTendencia, evaluarConsulta } from '../../src/crecimiento/consulta';
+import { agregarNota, consultaAnterior, listarNotas, obtenerConsulta } from '../../src/db/consultas';
 import { obtenerPaciente } from '../../src/db/pacientes';
 import { calcularEdad, deDate, isoATextoCorto, leerFechaISO, textoEdad, textoFechaHora } from '../../src/domain/fechas';
 import type { Consulta, NotaAclaratoria, Paciente } from '../../src/domain/types';
 import { Boton, Campo, Cargando, Dato, EnlaceTexto, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
+import { EvaluacionNutricional } from '../../src/ui/EvaluacionNutricional';
 
 function conUnidad(v: number | null, unidad: string): string | null {
   return v == null ? null : `${v} ${unidad}`;
@@ -20,16 +22,22 @@ export default function VerConsulta() {
   const [consulta, setConsulta] = useState<Consulta | null>(null);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [notas, setNotas] = useState<NotaAclaratoria[]>([]);
+  const [previa, setPrevia] = useState<Consulta | null>(null);
   const [nota, setNota] = useState('');
   const [guardando, setGuardando] = useState(false);
 
   const cargar = useCallback(async () => {
     const c = await obtenerConsulta(db, id);
     if (!c) return;
-    const [p, n] = await Promise.all([obtenerPaciente(db, c.pacienteId), listarNotas(db, id)]);
+    const [p, n, a] = await Promise.all([
+      obtenerPaciente(db, c.pacienteId),
+      listarNotas(db, id),
+      consultaAnterior(db, c.pacienteId, c.fechaHora),
+    ]);
     setConsulta(c);
     setPaciente(p);
     setNotas(n);
+    setPrevia(a);
   }, [db, id]);
 
   useEffect(() => {
@@ -40,6 +48,8 @@ export default function VerConsulta() {
 
   const nacimiento = leerFechaISO(paciente.fechaNacimiento);
   const edad = nacimiento ? calcularEdad(nacimiento, deDate(new Date(consulta.fechaHora))) : null;
+  const evaluacion = evaluarConsulta(paciente, consulta);
+  const alertas = alertasTendencia(previa ? evaluarConsulta(paciente, previa) : null, evaluacion);
   const presion =
     consulta.presionSistolica != null || consulta.presionDiastolica != null
       ? `${consulta.presionSistolica ?? '—'}/${consulta.presionDiastolica ?? '—'} mmHg`
@@ -85,12 +95,19 @@ export default function VerConsulta() {
           }
         />
         <Dato etiqueta="Perímetro cefálico" valor={conUnidad(consulta.perimetroCefalicoCm, 'cm')} />
+        {consulta.edema && <Dato etiqueta="Edema bilateral" valor="Sí" />}
         <Dato etiqueta="Temperatura" valor={conUnidad(consulta.temperaturaC, '°C')} />
         <Dato etiqueta="Frecuencia cardiaca" valor={conUnidad(consulta.frecuenciaCardiaca, 'lpm')} />
         <Dato etiqueta="Frecuencia respiratoria" valor={conUnidad(consulta.frecuenciaRespiratoria, 'rpm')} />
         <Dato etiqueta="Saturación de O₂" valor={conUnidad(consulta.saturacionO2, '%')} />
         <Dato etiqueta="Presión arterial" valor={presion} />
       </Seccion>
+
+      {evaluacion && (
+        <Seccion titulo="Evaluación nutricional (OMS)">
+          <EvaluacionNutricional evaluacion={evaluacion} alertas={alertas} />
+        </Seccion>
+      )}
 
       <Seccion titulo="Exploración y plan">
         <Dato etiqueta="Exploración física" valor={consulta.exploracionFisica} />

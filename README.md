@@ -4,7 +4,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 
 > ⚠️ **Versión de desarrollo.** Use solo pacientes ficticios. Los datos se guardan únicamente en el teléfono, todavía sin cifrado ni respaldo. No se debe usar en consulta real hasta completar la revisión de seguridad descrita en [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Qué hace esta versión (fase 1: expedientes)
+## Qué hace esta versión (fases 1 y 2)
 
 - Lista de pacientes con búsqueda por nombre, apellidos, número de expediente, responsable o teléfono.
 - Expediente con datos personales, responsable, contacto de emergencia y consentimientos.
@@ -15,6 +15,9 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - Alertas informativas de datos improbables: unidades equivocadas (metros, gramos, °F), valores fuera de rango, cambios bruscos de peso y tipo de medición que no corresponde a la edad.
 - Bitácora interna de creaciones y modificaciones.
 - Pacientes de demostración ficticios para practicar.
+- **Evaluación nutricional OMS** en cada consulta: puntaje Z, percentil e interpretación de peso/edad, talla/edad, peso/talla, IMC/edad y perímetro cefálico, con las tablas oficiales de la OMS 2006 (0–5 años) y 2007 (5–19 años). Se actualiza en vivo al escribir las medidas. Validada contra el software de la OMS ([docs/VALIDACION.md](docs/VALIDACION.md)).
+- **Gráficas de crecimiento** con curvas OMS en puntajes Z o percentiles y las mediciones del paciente.
+- Alertas de caída del puntaje Z entre consultas.
 
 ---
 
@@ -99,6 +102,8 @@ npx expo start
     pacientes/         Nuevo, expediente, editar, historia clínica, nueva consulta
     consultas/[id].tsx Detalle de consulta y notas aclaratorias
   src/domain/          Reglas clínicas y de negocio (edad, validaciones). Sin dependencias de la interfaz.
+  src/crecimiento/     Evaluación OMS: tablas LMS, puntajes Z, interpretación y curvas
+  scripts/             Generador de las tablas OMS a partir de los archivos oficiales
   src/db/              Base de datos local: esquema, migraciones y consultas SQL
   src/ui/              Componentes visuales y colores
   docs/                Prompt maestro del proyecto y hoja de ruta

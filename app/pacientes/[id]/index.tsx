@@ -99,6 +99,11 @@ export default function Expediente() {
         texto="＋ Nueva consulta"
         onPress={() => router.push({ pathname: '/pacientes/[id]/consulta-nueva', params: { id } })}
       />
+      <Boton
+        texto="Gráficas de crecimiento"
+        variante="secundario"
+        onPress={() => router.push({ pathname: '/pacientes/[id]/crecimiento', params: { id } })}
+      />
 
       <View style={{ height: espacio.l }} />
 

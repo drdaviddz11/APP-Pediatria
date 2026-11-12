@@ -72,6 +72,7 @@ export interface Consulta extends SignosVitales {
   tallaCm: number | null;
   tipoMedicion: TipoMedicion | null;
   perimetroCefalicoCm: number | null;
+  edema: boolean; // edema bilateral con fóvea
   diagnosticos: string;
   estudiosSolicitados: string;
   tratamiento: string;

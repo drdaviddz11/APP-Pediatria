@@ -23,6 +23,7 @@ interface FilaConsulta {
   talla_cm: number | null;
   tipo_medicion: 'acostado' | 'de_pie' | null;
   perimetro_cefalico_cm: number | null;
+  edema: number;
   diagnosticos: string;
   estudios_solicitados: string;
   tratamiento: string;
@@ -50,6 +51,7 @@ function aConsulta(f: FilaConsulta): Consulta {
     tallaCm: f.talla_cm,
     tipoMedicion: f.tipo_medicion,
     perimetroCefalicoCm: f.perimetro_cefalico_cm,
+    edema: f.edema === 1,
     diagnosticos: f.diagnosticos,
     estudiosSolicitados: f.estudios_solicitados,
     tratamiento: f.tratamiento,
@@ -66,9 +68,9 @@ export async function crearConsulta(db: SQLiteDatabase, pacienteId: string, c: C
       `INSERT INTO consultas (
         id, paciente_id, fecha_hora, motivo, enfermedad_actual, sintomas, exploracion_fisica,
         temperatura_c, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2,
-        presion_sistolica, presion_diastolica, peso_kg, talla_cm, tipo_medicion, perimetro_cefalico_cm,
+        presion_sistolica, presion_diastolica, peso_kg, talla_cm, tipo_medicion, perimetro_cefalico_cm, edema,
         diagnosticos, estudios_solicitados, tratamiento, indicaciones, fecha_seguimiento, creado_en
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       pacienteId,
       c.fechaHora,
@@ -86,6 +88,7 @@ export async function crearConsulta(db: SQLiteDatabase, pacienteId: string, c: C
       c.tallaCm,
       c.tipoMedicion,
       c.perimetroCefalicoCm,
+      c.edema ? 1 : 0,
       c.diagnosticos.trim(),
       c.estudiosSolicitados.trim(),
       c.tratamiento.trim(),
@@ -110,6 +113,16 @@ export async function listarConsultas(db: SQLiteDatabase, pacienteId: string): P
     pacienteId,
   );
   return filas.map(aConsulta);
+}
+
+/** Consulta anterior (por fecha) a la indicada, para comparar la evolución. */
+export async function consultaAnterior(db: SQLiteDatabase, pacienteId: string, fechaHora: string): Promise<Consulta | null> {
+  const f = await db.getFirstAsync<FilaConsulta>(
+    'SELECT * FROM consultas WHERE paciente_id = ? AND fecha_hora < ? ORDER BY fecha_hora DESC LIMIT 1',
+    pacienteId,
+    fechaHora,
+  );
+  return f ? aConsulta(f) : null;
 }
 
 /** Última consulta con peso registrado (para detectar cambios bruscos). */
