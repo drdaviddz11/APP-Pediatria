@@ -4,7 +4,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 
 ## Fase 1 — Expedientes (actual)
 
-- [x] Proyecto Expo + TypeScript compatible con Expo Go del App Store.
+- [x] Proyecto Expo (SDK 58) + TypeScript compatible con Expo Go del App Store.
 - [x] Base de datos local con migraciones.
 - [x] Pacientes: alta, edición, búsqueda rápida, edad y edad corregida.
 - [x] Historia clínica con bitácora de versiones anteriores.

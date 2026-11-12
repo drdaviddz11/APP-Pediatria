@@ -13,6 +13,8 @@ export default function Raiz() {
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
+            // Encabezado sólido: el contenido empieza debajo (iOS 26+ lo haría transparente).
+            headerTransparent: false,
             headerStyle: { backgroundColor: colores.superficie },
             headerTintColor: colores.primario,
             headerTitleStyle: { color: colores.texto, fontWeight: '700' },

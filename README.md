@@ -57,7 +57,7 @@ Dentro de la carpeta del proyecto:
 npm install
 npx expo install --fix
 ```
-El segundo comando ajusta automáticamente las versiones para que coincidan con Expo Go. Puede tardar unos minutos.
+El segundo comando ajusta automáticamente las versiones exactas de cada pieza a la versión de Expo del proyecto. Puede tardar unos minutos.
 
 ### 4. Abrir la app en el teléfono
 
@@ -90,8 +90,8 @@ npx expo start
 
 ## Notas técnicas
 
-- **Tecnología:** React Native + Expo SDK 54 + TypeScript + Expo Router + SQLite (`expo-sqlite`).
-- **Por qué SDK 54:** es la versión que admite la app Expo Go del App Store. Las versiones más nuevas requieren una cuenta de Apple Developer para probar en iPhone. Se actualizará cuando se haga la compilación propia de la app.
+- **Tecnología:** React Native + Expo SDK 58 + TypeScript + Expo Router + SQLite (`expo-sqlite`).
+- **Versión de Expo:** debe coincidir con la que admite la app Expo Go del App Store (hoy SDK 58). Si Expo Go muestra "Project is incompatible", hay que actualizar el SDK del proyecto.
 - **Estructura:**
   ```
   app/                 Pantallas (cada archivo es una ruta)
