@@ -17,6 +17,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - Pacientes de demostración ficticios para practicar.
 - **Evaluación nutricional OMS** en cada consulta: puntaje Z, percentil e interpretación de peso/edad, talla/edad, peso/talla, IMC/edad y perímetro cefálico, con las tablas oficiales de la OMS 2006 (0–5 años) y 2007 (5–19 años). Se actualiza en vivo al escribir las medidas. Validada contra el software de la OMS ([docs/VALIDACION.md](docs/VALIDACION.md)).
 - **Gráficas de crecimiento** con curvas OMS en puntajes Z o percentiles y las mediciones del paciente.
+- **Síndrome de Down:** al marcarlo en el expediente, la evaluación y las gráficas usan las curvas del CDC para niños con síndrome de Down (Zemel et al., Pediatrics 2015).
 - Alertas de caída del puntaje Z entre consultas.
 
 ---
@@ -103,7 +104,7 @@ npx expo start
     consultas/[id].tsx Detalle de consulta y notas aclaratorias
   src/domain/          Reglas clínicas y de negocio (edad, validaciones). Sin dependencias de la interfaz.
   src/crecimiento/     Evaluación OMS: tablas LMS, puntajes Z, interpretación y curvas
-  scripts/             Generador de las tablas OMS a partir de los archivos oficiales
+  scripts/             Generadores de las tablas OMS y CDC (síndrome de Down) a partir de las fuentes oficiales
   src/db/              Base de datos local: esquema, migraciones y consultas SQL
   src/ui/              Componentes visuales y colores
   docs/                Prompt maestro del proyecto y hoja de ruta

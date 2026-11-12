@@ -81,6 +81,7 @@ export default function Expediente() {
             {edadCorregida ? ` · Edad corregida: ${edadCorregida}` : ''}
           </Text>
         )}
+        {paciente.sindromeDown && <Text style={s.etiquetaDown}>Síndrome de Down · curvas de crecimiento CDC para SD</Text>}
         {paciente.esDemo && <Text style={s.etiquetaDemo}>PACIENTE FICTICIO (DEMO)</Text>}
       </View>
 
@@ -174,6 +175,7 @@ export default function Expediente() {
 const s = StyleSheet.create({
   cabecera: { marginBottom: espacio.l, gap: 2 },
   nombre: { fontSize: texto.titulo, fontWeight: '800', color: colores.texto },
+  etiquetaDown: { marginTop: espacio.xs, fontSize: texto.mini, fontWeight: '700', color: colores.primario },
   etiquetaDemo: { marginTop: espacio.xs, fontSize: texto.mini, fontWeight: '700', color: colores.aviso },
   alergias: {
     backgroundColor: colores.peligroSuave,

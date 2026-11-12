@@ -3,14 +3,18 @@
 //   - 0 a <60 meses: Patrones OMS 2006, edad en días, ajuste de ±0.7 cm según la posición.
 //   - 60 a <229 meses: Referencia OMS 2007, edad en meses con interpolación.
 //   - Corrección |Z| > 3 en los indicadores basados en peso.
+// Síndrome de Down: curvas CDC (Zemel et al., Pediatrics 2015), ver evaluarDown().
 // Decisión clínica del proyecto: edad corregida para nacidos < 37 semanas hasta los 24 meses cronológicos.
 
 import { calcularEdad, leerFechaISO } from '../domain/fechas';
 import { OMS2006 } from './datos/oms2006';
 import { OMS2007 } from './datos/oms2007';
+import { CDC_DOWN } from './datos/cdcDown';
 import {
+  extremosPorSexo,
   lmsEnPunto,
   lmsInterpolado,
+  lmsPorSexo,
   percentilDeZ,
   redondear2,
   zLMS,
@@ -20,6 +24,7 @@ import type {
   DatosEvaluacion,
   Indicador,
   LMS,
+  Referencia,
   ResultadoEvaluacion,
   ResultadoIndicador,
 } from './tipos';
@@ -48,7 +53,7 @@ function diasEntre(desdeISO: string, hastaISO: string): number | null {
 
 function resultado(
   indicador: Indicador,
-  referencia: 'OMS2006' | 'OMS2007',
+  referencia: Referencia,
   valor: number | null,
   lms: LMS | null,
   ajustado: boolean,
@@ -89,6 +94,7 @@ export function evaluarCrecimiento(d: DatosEvaluacion): ResultadoEvaluacion | nu
     imc: null,
     indicadores: [],
     notas,
+    comparacionGeneral: null,
   };
 
   // --- Edad corregida en prematuros (< 37 semanas) hasta los 24 meses cronológicos ---
@@ -101,7 +107,7 @@ export function evaluarCrecimiento(d: DatosEvaluacion): ResultadoEvaluacion | nu
     base.usaEdadCorregida = true;
     if (edadDias < 0) {
       notas.push(
-        'Aún no cumple 40 semanas de edad corregida: los patrones OMS empiezan al término. Use curvas para prematuros.',
+        'Aún no cumple 40 semanas de edad corregida: las curvas empiezan al término. Use curvas para prematuros.',
       );
       return base;
     }
@@ -111,6 +117,8 @@ export function evaluarCrecimiento(d: DatosEvaluacion): ResultadoEvaluacion | nu
   const edadMeses = edadDias / DIAS_POR_MES;
   base.edadDiasUsada = edadDias;
   base.edadMesesUsada = edadMeses;
+
+  if (d.sindromeDown) return evaluarDown(d, base, edadMeses);
 
   if (edadDias <= ULTIMO_DIA_OMS2006 && edadMeses < 60) {
     return evaluarOMS2006(d, base, edadDias, edadMeses);
@@ -205,5 +213,68 @@ function evaluarOMS2007(d: DatosEvaluacion, r: ResultadoEvaluacion, edadMeses: n
   r.indicadores.push(resultado('pesoTalla', 'OMS2007', peso, null, true, 'Sin referencia OMS después de los 5 años; use IMC para la edad'));
   r.indicadores.push(resultado('imcEdad', 'OMS2007', imc, lmsInterpolado(OMS2007.imcEdad, s, inferior, fraccion), true, sinPeso));
   r.indicadores.push(resultado('pcEdad', 'OMS2007', d.perimetroCefalicoCm, null, false, 'Sin referencia OMS después de los 5 años'));
+  return r;
+}
+
+// ---------------------------------------------------------------------------
+// Síndrome de Down: curvas CDC (Zemel BS et al., Pediatrics 2015;136:e1204)
+// ---------------------------------------------------------------------------
+// - 0 a 36 meses: peso, longitud, perímetro cefálico (por mes) y peso para la longitud (por cm).
+// - 2 a 20 años: peso, talla, perímetro cefálico e IMC (cada 0.5 años).
+// - Entre 24 y 36 meses se usan las tablas de 2–20 años solo si la talla se midió de pie.
+// - Se interpola linealmente L, M y S entre los puntos de la tabla. Puntaje Z con el método LMS
+//   (sin la corrección |Z| > 3, que es propia de la OMS). La medida se usa tal como se tomó.
+// - Desde los 2 años se agrega el IMC para la edad con la referencia general (OMS) para valorar
+//   sobrepeso u obesidad, como recomienda el CDC.
+
+const LIMITE_MESES_DOWN = 240; // 20 años
+
+function evaluarDown(d: DatosEvaluacion, r: ResultadoEvaluacion, edadMeses: number): ResultadoEvaluacion {
+  const s = d.sexo;
+  const peso = d.pesoKg != null && d.pesoKg > 0 ? d.pesoKg : null;
+  const talla = d.tallaCm != null && d.tallaCm > 0 ? d.tallaCm : null;
+  r.tallaAjustadaCm = talla;
+  r.imc = peso != null && talla != null ? peso / Math.pow(talla / 100, 2) : null;
+  const sinPeso = d.edema ? 'Con edema bilateral no se valoran los indicadores basados en peso' : undefined;
+
+  if (edadMeses > LIMITE_MESES_DOWN) {
+    r.notas.push('Tiene más de 20 años: fuera del rango de las curvas para síndrome de Down.');
+    return r;
+  }
+
+  const usaInfantil = edadMeses < 24 || (edadMeses <= 36 && d.tipoMedicion !== 'de_pie');
+  if (usaInfantil) {
+    r.referencia = 'SD036';
+    const desdeUnMes = edadMeses < 1 ? 'Las curvas de longitud y perímetro cefálico empiezan al mes de edad' : undefined;
+    r.indicadores.push(resultado('pesoEdad', 'SD036', peso, lmsPorSexo(CDC_DOWN.pesoEdad036, s, edadMeses), false, sinPeso));
+    r.indicadores.push(resultado('tallaEdad', 'SD036', talla, lmsPorSexo(CDC_DOWN.tallaEdad036, s, edadMeses), false, desdeUnMes));
+    if (peso == null || talla == null) {
+      r.indicadores.push(resultado('pesoTalla', 'SD036', null, null, false, 'Requiere peso y longitud'));
+    } else {
+      const [min, max] = extremosPorSexo(CDC_DOWN.pesoLongitud036, s);
+      r.indicadores.push(
+        talla < min || talla > max
+          ? resultado('pesoTalla', 'SD036', peso, null, false, `La longitud debe estar entre ${min} y ${max} cm`)
+          : resultado('pesoTalla', 'SD036', peso, lmsPorSexo(CDC_DOWN.pesoLongitud036, s, talla), false, sinPeso),
+      );
+    }
+    r.indicadores.push(resultado('imcEdad', 'SD036', r.imc, null, false, 'Las curvas para síndrome de Down tienen IMC desde los 2 años'));
+    r.indicadores.push(resultado('pcEdad', 'SD036', d.perimetroCefalicoCm, lmsPorSexo(CDC_DOWN.pcEdad036, s, edadMeses), false, desdeUnMes));
+  } else {
+    r.referencia = 'SD220';
+    const anios = edadMeses / 12;
+    r.indicadores.push(resultado('pesoEdad', 'SD220', peso, lmsPorSexo(CDC_DOWN.pesoEdad220, s, anios), false, sinPeso));
+    r.indicadores.push(resultado('tallaEdad', 'SD220', talla, lmsPorSexo(CDC_DOWN.tallaEdad220, s, anios), false));
+    r.indicadores.push(resultado('pesoTalla', 'SD220', peso, null, false, 'Las curvas para síndrome de Down tienen peso para la longitud solo hasta los 36 meses; use IMC'));
+    r.indicadores.push(resultado('imcEdad', 'SD220', r.imc, lmsPorSexo(CDC_DOWN.imcEdad220, s, anios), false, sinPeso));
+    r.indicadores.push(resultado('pcEdad', 'SD220', d.perimetroCefalicoCm, lmsPorSexo(CDC_DOWN.pcEdad220, s, anios), false));
+  }
+  if (talla != null) r.notas.push('La talla se usa tal como se midió (las curvas para síndrome de Down no aplican el ajuste de 0.7 cm).');
+
+  // Referencia general para sobrepeso/obesidad desde los 2 años.
+  if (edadMeses >= 24 && r.imc != null && !d.edema) {
+    const general = evaluarCrecimiento({ ...d, sindromeDown: false });
+    r.comparacionGeneral = general?.indicadores.find((i) => i.indicador === 'imcEdad' && i.z != null) ?? null;
+  }
   return r;
 }

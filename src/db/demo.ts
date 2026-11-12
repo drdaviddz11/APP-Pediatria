@@ -21,6 +21,7 @@ function nacimientoHace(meses: number): string {
 
 const BASE: Omit<PacienteEntrada, 'numeroExpediente' | 'nombres' | 'apellidos' | 'fechaNacimiento' | 'sexo'> = {
   semanasGestacion: null,
+  sindromeDown: false,
   responsableNombre: '',
   responsableParentesco: 'Madre',
   telefonoPrincipal: '504 0000-0000',

@@ -14,6 +14,7 @@ interface Estado {
   fechaNacimiento: string;
   sexo: '' | 'F' | 'M';
   semanasGestacion: string;
+  sindromeDown: boolean;
   responsableNombre: string;
   responsableParentesco: string;
   telefonoPrincipal: string;
@@ -35,6 +36,7 @@ function estadoInicial(p?: Paciente, numeroSugerido = ''): Estado {
     fechaNacimiento: p ? isoATextoUsuario(p.fechaNacimiento) : '',
     sexo: p?.sexo ?? '',
     semanasGestacion: p?.semanasGestacion != null ? String(p.semanasGestacion) : '',
+    sindromeDown: p?.sindromeDown ?? false,
     responsableNombre: p?.responsableNombre ?? '',
     responsableParentesco: p?.responsableParentesco ?? '',
     telefonoPrincipal: p?.telefonoPrincipal ?? '',
@@ -82,6 +84,7 @@ export function FormularioPaciente({
         fechaNacimiento: aISO(nac),
         sexo: e.sexo,
         semanasGestacion: leerNumero(e.semanasGestacion),
+        sindromeDown: e.sindromeDown,
         responsableNombre: e.responsableNombre,
         responsableParentesco: e.responsableParentesco,
         telefonoPrincipal: e.telefonoPrincipal,
@@ -153,6 +156,11 @@ export function FormularioPaciente({
           unidad="sem"
           problema={problemaDe('semanasGestacion')}
           ayuda="Si nació antes de las 37 semanas se usará para la edad corregida."
+        />
+        <Interruptor
+          etiqueta="Síndrome de Down (usar curvas de crecimiento específicas del CDC)"
+          valor={e.sindromeDown}
+          alCambiar={cambiar('sindromeDown')}
         />
       </Seccion>
 

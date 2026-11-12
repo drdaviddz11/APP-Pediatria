@@ -4,12 +4,15 @@
 
 Las tablas LMS se tomaron sin modificar de los repositorios oficiales de la OMS y se convierten a código con `scripts/generar_tablas_oms.py`:
 
-| Referencia | Repositorio oficial | Archivos |
+| Referencia | Fuente oficial | Archivos / medidas |
 |---|---|---|
 | Patrones de crecimiento OMS 2006 (0–5 años) | github.com/WorldHealthOrganization/anthro | `weianthro`, `lenanthro`, `bmianthro`, `hcanthro`, `wflanthro`, `wfhanthro` |
 | Referencia de crecimiento OMS 2007 (5–19 años) | github.com/WorldHealthOrganization/anthroplus | `wfawho2007`, `hfawho2007`, `bfawho2007` |
+| Curvas CDC para síndrome de Down (0–36 meses y 2–20 años) | Zemel BS et al., *Pediatrics* 2015;136:e1204, Supplemental Tables 4–19 (PDF suplementario) | Peso, longitud/talla, perímetro cefálico, peso para la longitud e IMC |
 
 El script comprueba que no falte ni se repita ningún punto de las tablas.
+
+Las tablas de síndrome de Down se extraen del PDF con `scripts/generar_tablas_down.py`. En el texto del PDF el signo menos aparece como "2" delante del número (por ejemplo "20.045" = −0.045); el script lo corrige y verifica cada fila contra los 9 percentiles impresos.
 
 ## Reglas reproducidas del software de la OMS
 
@@ -21,6 +24,16 @@ El script comprueba que no falte ni se repita ningún punto de las tablas.
 - Límites de plausibilidad: peso/edad < −6 o > +5; talla/edad |Z| > 6; peso/talla, IMC y perímetro cefálico |Z| > 5.
 - Decisión clínica del proyecto: edad corregida para nacidos antes de las 37 semanas, hasta los 24 meses cronológicos.
 
+## Reglas para síndrome de Down
+
+- 0–36 meses: edad en meses con interpolación lineal de L, M y S; peso desde el nacimiento, longitud y perímetro cefálico desde 1 mes; peso para la longitud según el rango de cada sexo (niñas 52–90 cm, niños 49–93 cm).
+- 2–20 años: edad en años (cada 0.5) con interpolación; peso, talla, perímetro cefálico e IMC.
+- Entre 24 y 36 meses se usan las tablas de 2–20 años solo si la talla se midió de pie.
+- Puntaje Z con el método LMS, sin la corrección |Z| > 3 de la OMS. La medida se usa tal como se tomó (sin ajuste de 0.7 cm).
+- Interpretación descriptiva por percentil (< P2, < P5, P5–P95, > P95, > P98): las curvas describen el crecimiento de niños con SD y no definen puntos de corte de desnutrición.
+- Desde los 2 años se muestra además el IMC para la edad con la referencia general (OMS) para valorar sobrepeso u obesidad, siguiendo la indicación del CDC de usar curvas de la población general para el IMC.
+- Limitación señalada por el CDC: la muestra (637 niños, mayormente de Filadelfia) puede no representar a todos los niños con SD.
+
 ## Resultados
 
 | Prueba | Resultado |
@@ -31,9 +44,13 @@ El script comprueba que no falte ni se repita ningún punto de las tablas.
 | Ajuste de 0.7 cm, cambio de tabla a los 731 días, límites de edad y de longitud/talla, edad corregida | Correctos |
 | Percentiles (función normal) | Error < 0.00001 percentiles |
 | Curvas de las gráficas (26 combinaciones) | Completas y ordenadas |
+| Síndrome de Down: 5382 percentiles impresos contra los L, M, S extraídos | Diferencia máxima 0.21 Z, explicada porque los percentiles están impresos con 1 decimal y L, M, S con 3 |
+| Síndrome de Down: 5328 percentiles impresos evaluados con la app completa (edad, interpolación, elección de tabla) | Diferencia máxima 0.21 Z |
+| Síndrome de Down: elección de tabla a los 24–36 meses, edema, comparación con la referencia general, 32 gráficas | Correctas |
 
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).
 - Definir si se usarán curvas para prematuros (Fenton o INTERGROWTH-21st) antes de las 40 semanas de edad corregida.
 - Definir si se usarán referencias CDC en algún caso.
+- Síndrome de Down: confirmar el uso de la referencia general OMS para el IMC (el CDC remite a sus propias curvas generales) y revisar los textos de interpretación por percentil.

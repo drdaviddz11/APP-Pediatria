@@ -114,6 +114,11 @@ const MIGRACIONES: string[] = [
   `
   ALTER TABLE consultas ADD COLUMN edema INTEGER NOT NULL DEFAULT 0;
   `,
+
+  // Versión 3: síndrome de Down (usa las curvas de crecimiento específicas del CDC)
+  `
+  ALTER TABLE pacientes ADD COLUMN sindrome_down INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

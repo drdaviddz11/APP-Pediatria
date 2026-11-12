@@ -12,7 +12,7 @@ export function fechaDeConsulta(c: Pick<Consulta, 'fechaHora'>): string {
 }
 
 export function evaluarConsulta(
-  p: Pick<Paciente, 'sexo' | 'fechaNacimiento' | 'semanasGestacion'>,
+  p: Pick<Paciente, 'sexo' | 'fechaNacimiento' | 'semanasGestacion' | 'sindromeDown'>,
   c: Pick<Consulta, 'fechaHora' | 'pesoKg' | 'tallaCm' | 'tipoMedicion' | 'perimetroCefalicoCm' | 'edema'>,
 ): ResultadoEvaluacion | null {
   if (c.pesoKg == null && c.tallaCm == null && c.perimetroCefalicoCm == null) return null;
@@ -26,6 +26,7 @@ export function evaluarConsulta(
     tipoMedicion: c.tipoMedicion,
     perimetroCefalicoCm: c.perimetroCefalicoCm,
     edema: c.edema,
+    sindromeDown: p.sindromeDown,
   });
 }
 

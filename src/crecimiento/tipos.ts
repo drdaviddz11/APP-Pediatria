@@ -8,6 +8,13 @@ export interface TablaLMS {
   F: readonly number[]; // femenino
 }
 
+/** Tabla LMS cuyo primer punto puede ser distinto en cada sexo (curvas CDC para síndrome de Down). */
+export interface TablaLMSPorSexo {
+  paso: number;
+  M: { inicio: number; v: readonly number[] };
+  F: { inicio: number; v: readonly number[] };
+}
+
 export interface LMS {
   l: number;
   m: number;
@@ -16,12 +23,18 @@ export interface LMS {
 
 export type Indicador = 'pesoEdad' | 'tallaEdad' | 'pesoTalla' | 'imcEdad' | 'pcEdad';
 
-export type Referencia = 'OMS2006' | 'OMS2007';
+export type Referencia = 'OMS2006' | 'OMS2007' | 'SD036' | 'SD220';
 
 export const NOMBRE_REFERENCIA: Record<Referencia, string> = {
   OMS2006: 'Patrones de crecimiento OMS 2006 (0–5 años)',
   OMS2007: 'Referencia de crecimiento OMS 2007 (5–19 años)',
+  SD036: 'Curvas CDC para síndrome de Down (0–36 meses)',
+  SD220: 'Curvas CDC para síndrome de Down (2–20 años)',
 };
+
+export function esReferenciaDown(r: Referencia | null): boolean {
+  return r === 'SD036' || r === 'SD220';
+}
 
 export const NOMBRE_INDICADOR: Record<Indicador, string> = {
   pesoEdad: 'Peso para la edad',
@@ -42,6 +55,8 @@ export interface DatosEvaluacion {
   perimetroCefalicoCm: number | null;
   /** Edema bilateral con fóvea: la OMS no calcula indicadores basados en peso. */
   edema: boolean;
+  /** Usa las curvas específicas para síndrome de Down en lugar de las de la OMS. */
+  sindromeDown: boolean;
 }
 
 export interface ResultadoIndicador {
@@ -72,4 +87,9 @@ export interface ResultadoEvaluacion {
   imc: number | null;
   indicadores: ResultadoIndicador[];
   notas: string[];
+  /**
+   * En síndrome de Down desde los 2 años: IMC para la edad con la referencia general (OMS),
+   * para clasificar sobrepeso u obesidad.
+   */
+  comparacionGeneral: ResultadoIndicador | null;
 }

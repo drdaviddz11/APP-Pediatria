@@ -2,9 +2,9 @@
 
 import { StyleSheet, Text, View } from 'react-native';
 import type { AlertaTendencia } from '../crecimiento/consulta';
-import { AVISO_CLINICO, interpretarIndicador, Nivel, resumenNutricional } from '../crecimiento/interpretacion';
+import { AVISO_CLINICO, interpretarIndicador, Nivel, NOTA_DOWN, resumenNutricional } from '../crecimiento/interpretacion';
 import { textoPercentil } from '../crecimiento/lms';
-import { NOMBRE_INDICADOR, NOMBRE_REFERENCIA, ResultadoEvaluacion } from '../crecimiento/tipos';
+import { esReferenciaDown, NOMBRE_INDICADOR, NOMBRE_REFERENCIA, ResultadoEvaluacion } from '../crecimiento/tipos';
 import { colores, espacio, radio, texto } from './tema';
 
 const COLOR_NIVEL: Record<Nivel, { fondo: string; texto: string }> = {
@@ -111,6 +111,7 @@ export function EvaluacionNutricional({
         </Text>
       ))}
 
+      {esReferenciaDown(e.referencia) && <Text style={s.nota}>{NOTA_DOWN}</Text>}
       <Text style={s.aviso}>{AVISO_CLINICO}</Text>
     </View>
   );

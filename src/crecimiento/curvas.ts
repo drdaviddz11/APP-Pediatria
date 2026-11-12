@@ -3,14 +3,38 @@
 import type { SexoReferencia } from '../domain/types';
 import { OMS2006 } from './datos/oms2006';
 import { OMS2007 } from './datos/oms2007';
+import { CDC_DOWN } from './datos/cdcDown';
 import { DIAS_POR_MES } from './evaluacion';
-import { lmsEnIndice, tamanoTabla, valorEnZ, zDePercentil } from './lms';
-import type { Indicador, ResultadoEvaluacion, TablaLMS } from './tipos';
+import { extremosPorSexo, lmsEnIndice, tamanoTabla, valorEnZ, zDePercentil } from './lms';
+import type { Indicador, Referencia, ResultadoEvaluacion, TablaLMS, TablaLMSPorSexo } from './tipos';
 
-export type Rango = '0-2' | '2-5' | '5-19';
+export type Rango = '0-2' | '2-5' | '5-19' | 'sd-0-3' | 'sd-2-20';
 export type Escala = 'z' | 'percentil';
 
-export const NOMBRE_RANGO: Record<Rango, string> = { '0-2': '0–2 años', '2-5': '2–5 años', '5-19': '5–19 años' };
+export const NOMBRE_RANGO: Record<Rango, string> = {
+  '0-2': '0–2 años',
+  '2-5': '2–5 años',
+  '5-19': '5–19 años',
+  'sd-0-3': '0–36 meses',
+  'sd-2-20': '2–20 años',
+};
+
+/** Rangos de edad de las gráficas según la población de referencia del paciente. */
+export function rangosDisponibles(sindromeDown: boolean): Rango[] {
+  return sindromeDown ? ['sd-0-3', 'sd-2-20'] : ['0-2', '2-5', '5-19'];
+}
+
+const REFERENCIA_RANGO: Record<Rango, Referencia> = {
+  '0-2': 'OMS2006',
+  '2-5': 'OMS2006',
+  '5-19': 'OMS2007',
+  'sd-0-3': 'SD036',
+  'sd-2-20': 'SD220',
+};
+
+export function referenciaDeRango(r: Rango): Referencia {
+  return REFERENCIA_RANGO[r];
+}
 
 export interface LineaReferencia {
   etiqueta: string; // "0", "-2", "P50"…
@@ -28,6 +52,8 @@ export interface ConfigGrafica {
 
 export const LINEAS_Z = [-3, -2, -1, 0, 1, 2, 3];
 export const LINEAS_PERCENTIL = [3, 15, 50, 85, 97];
+/** Percentiles de las curvas CDC para síndrome de Down. */
+export const LINEAS_PERCENTIL_DOWN = [5, 10, 25, 50, 75, 90, 95];
 
 function tipoZ(z: number): LineaReferencia['tipo'] {
   if (z === 0) return 'mediana';
@@ -38,8 +64,71 @@ function tipoZ(z: number): LineaReferencia['tipo'] {
 
 function tipoPercentil(p: number): LineaReferencia['tipo'] {
   if (p === 50) return 'mediana';
-  if (p === 3 || p === 97) return 'media';
+  if (p === 3 || p === 97 || p === 5 || p === 95) return 'media';
   return 'leve';
+}
+
+/** Curvas a partir de una tabla con inicio distinto por sexo (síndrome de Down). */
+function lineasPorSexo(
+  tabla: TablaLMSPorSexo,
+  sexo: SexoReferencia,
+  aX: (x: number) => number,
+  escala: Escala,
+): LineaReferencia[] {
+  const t = sexo === 'M' ? tabla.M : tabla.F;
+  const n = t.v.length / 3;
+  const valores = escala === 'z' ? LINEAS_Z : LINEAS_PERCENTIL_DOWN;
+  return valores.map((v) => {
+    const z = escala === 'z' ? v : zDePercentil(v);
+    const puntos: { x: number; y: number }[] = [];
+    for (let i = 0; i < n; i++) {
+      const lms = { l: t.v[i * 3], m: t.v[i * 3 + 1], s: t.v[i * 3 + 2] };
+      puntos.push({ x: aX(t.inicio + i * tabla.paso), y: valorEnZ(z, lms) });
+    }
+    return {
+      etiqueta: escala === 'z' ? (v > 0 ? `+${v}` : String(v)) : `P${v}`,
+      tipo: escala === 'z' ? tipoZ(v) : tipoPercentil(v),
+      puntos,
+    };
+  });
+}
+
+const TABLAS_DOWN: Record<Indicador, { t036?: TablaLMSPorSexo; t220?: TablaLMSPorSexo; unidad: string }> = {
+  pesoEdad: { t036: CDC_DOWN.pesoEdad036, t220: CDC_DOWN.pesoEdad220, unidad: 'kg' },
+  tallaEdad: { t036: CDC_DOWN.tallaEdad036, t220: CDC_DOWN.tallaEdad220, unidad: 'cm' },
+  pcEdad: { t036: CDC_DOWN.pcEdad036, t220: CDC_DOWN.pcEdad220, unidad: 'cm' },
+  imcEdad: { t220: CDC_DOWN.imcEdad220, unidad: 'kg/m²' },
+  pesoTalla: { t036: CDC_DOWN.pesoLongitud036, unidad: 'kg' },
+};
+
+function configurarDown(indicador: Indicador, sexo: SexoReferencia, rango: Rango, escala: Escala, noDisponible: (m: string) => ConfigGrafica): ConfigGrafica {
+  const t = TABLAS_DOWN[indicador];
+  if (rango === 'sd-0-3') {
+    if (!t.t036) return noDisponible('Las curvas para síndrome de Down tienen IMC desde los 2 años.');
+    if (indicador === 'pesoTalla') {
+      const [min, max] = extremosPorSexo(t.t036, sexo);
+      return {
+        disponible: true,
+        ejeX: { titulo: 'Longitud (cm)', min, max, marcas: marcasCada(min, max, 5), textoMarca: (x) => `${x}` },
+        unidadY: t.unidad,
+        lineas: lineasPorSexo(t.t036, sexo, (x) => x, escala),
+      };
+    }
+    const [min] = extremosPorSexo(t.t036, sexo);
+    return {
+      disponible: true,
+      ejeX: { titulo: 'Edad (meses)', min, max: 36, marcas: marcasCada(0, 36, 6), textoMarca: textoMeses },
+      unidadY: t.unidad,
+      lineas: lineasPorSexo(t.t036, sexo, (x) => x, escala),
+    };
+  }
+  if (!t.t220) return noDisponible('Las curvas para síndrome de Down tienen peso para la longitud solo hasta los 36 meses. Use IMC.');
+  return {
+    disponible: true,
+    ejeX: { titulo: 'Edad (años)', min: 24, max: 240, marcas: marcasCada(24, 240, 24), textoMarca: textoAnios },
+    unidadY: t.unidad,
+    lineas: lineasPorSexo(t.t220, sexo, (anios) => anios * 12, escala),
+  };
 }
 
 /** Recorre la tabla entre dos índices, cada `salto` puntos, y devuelve (x, LMS). */
@@ -104,6 +193,8 @@ export function configurarGrafica(indicador: Indicador, sexo: SexoReferencia, ra
     lineas: [],
   });
 
+  if (rango === 'sd-0-3' || rango === 'sd-2-20') return configurarDown(indicador, sexo, rango, escala, noDisponible);
+
   if (indicador === 'pesoTalla') {
     if (rango === '5-19') return noDisponible('La OMS no tiene referencia de peso para la talla después de los 5 años. Use IMC para la edad.');
     const usaLongitud = rango === '0-2';
@@ -145,7 +236,8 @@ export function configurarGrafica(indicador: Indicador, sexo: SexoReferencia, ra
 }
 
 /** Rango que corresponde a una edad en meses. */
-export function rangoParaEdad(meses: number): Rango {
+export function rangoParaEdad(meses: number, sindromeDown = false): Rango {
+  if (sindromeDown) return meses < 36 ? 'sd-0-3' : 'sd-2-20';
   if (meses < 24) return '0-2';
   if (meses < 60) return '2-5';
   return '5-19';
@@ -169,8 +261,10 @@ export function puntosPaciente(
     if (e.edadMesesUsada == null) continue;
     const r = e.indicadores.find((i) => i.indicador === indicador);
     if (!r || r.valorUsado == null || r.z == null) continue;
+    if (r.referencia !== REFERENCIA_RANGO[rango]) continue;
     const meses = e.edadMesesUsada;
-    const enRango = rango === '0-2' ? meses < 24 : rango === '2-5' ? meses >= 24 && meses < 60 : meses >= 60;
+    const enRango =
+      rango === '0-2' ? meses < 24 : rango === '2-5' ? meses >= 24 && meses < 60 : true;
     if (!enRango) continue;
     if (indicador === 'pesoTalla') {
       if (e.tallaAjustadaCm == null) continue;

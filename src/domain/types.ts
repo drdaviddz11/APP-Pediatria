@@ -16,6 +16,7 @@ export interface Paciente {
   fechaNacimiento: string; // AAAA-MM-DD
   sexo: SexoReferencia;
   semanasGestacion: number | null; // edad gestacional al nacer, para edad corregida
+  sindromeDown: boolean; // usa las curvas de crecimiento para síndrome de Down
   responsableNombre: string;
   responsableParentesco: string;
   telefonoPrincipal: string;

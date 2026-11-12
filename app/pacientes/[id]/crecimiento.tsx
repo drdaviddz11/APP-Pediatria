@@ -12,7 +12,10 @@ import {
   puntosPaciente,
   Rango,
   rangoParaEdad,
+  rangosDisponibles,
+  referenciaDeRango,
 } from '../../../src/crecimiento/curvas';
+import { NOTA_DOWN } from '../../../src/crecimiento/interpretacion';
 import { NOMBRE_INDICADOR, NOMBRE_REFERENCIA, Indicador, ResultadoEvaluacion } from '../../../src/crecimiento/tipos';
 import { listarConsultas } from '../../../src/db/consultas';
 import { obtenerPaciente } from '../../../src/db/pacientes';
@@ -58,7 +61,9 @@ export default function Crecimiento() {
         setEvaluaciones(lista);
         // Rango inicial: el de la medición más reciente.
         const ultima = [...lista].reverse().find((x) => x.e.edadMesesUsada != null);
-        setRango((r) => r ?? rangoParaEdad(ultima?.e.edadMesesUsada ?? 0));
+        setRango((r) =>
+          r && rangosDisponibles(p.sindromeDown).includes(r) ? r : rangoParaEdad(ultima?.e.edadMesesUsada ?? 0, p.sindromeDown),
+        );
       })();
       return () => {
         activo = false;
@@ -70,7 +75,7 @@ export default function Crecimiento() {
 
   const config = configurarGrafica(indicador, paciente.sexo, rango, escala);
   const puntos = puntosPaciente(indicador, rango, evaluaciones);
-  const referencia = rango === '5-19' ? NOMBRE_REFERENCIA.OMS2007 : NOMBRE_REFERENCIA.OMS2006;
+  const referencia = NOMBRE_REFERENCIA[referenciaDeRango(rango)];
 
   return (
     <PantallaSimple>
@@ -79,6 +84,7 @@ export default function Crecimiento() {
       </Text>
       <Text style={[estilos.suave, { marginBottom: espacio.m }]}>
         {paciente.sexo === 'F' ? 'Niña' : 'Niño'} · curvas {paciente.sexo === 'F' ? 'femeninas' : 'masculinas'}
+        {paciente.sindromeDown ? ' para síndrome de Down' : ''}
       </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: espacio.s, paddingBottom: espacio.m }}>
@@ -94,7 +100,7 @@ export default function Crecimiento() {
 
       <Selector<Rango>
         etiqueta="Edad"
-        opciones={(['0-2', '2-5', '5-19'] as Rango[]).map((r) => ({ valor: r, texto: NOMBRE_RANGO[r] }))}
+        opciones={rangosDisponibles(paciente.sindromeDown).map((r) => ({ valor: r, texto: NOMBRE_RANGO[r] }))}
         valor={rango}
         alCambiar={setRango}
       />
@@ -113,6 +119,7 @@ export default function Crecimiento() {
           <>
             <GraficaCrecimiento config={config} puntos={puntos} />
             <Text style={estilos.suave}>{referencia}</Text>
+            {paciente.sindromeDown && <Text style={[estilos.suave, { marginTop: espacio.xs }]}>{NOTA_DOWN}</Text>}
             {puntos.length === 0 && (
               <Text style={[estilos.suave, { marginTop: espacio.s }]}>No hay mediciones del paciente en este rango de edad.</Text>
             )}

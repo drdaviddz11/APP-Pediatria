@@ -15,6 +15,7 @@ interface FilaPaciente {
   fecha_nacimiento: string;
   sexo: 'F' | 'M';
   semanas_gestacion: number | null;
+  sindrome_down: number;
   responsable_nombre: string;
   responsable_parentesco: string;
   telefono_principal: string;
@@ -40,6 +41,7 @@ function aPaciente(f: FilaPaciente): Paciente {
     fechaNacimiento: f.fecha_nacimiento,
     sexo: f.sexo,
     semanasGestacion: f.semanas_gestacion,
+    sindromeDown: aBool(f.sindrome_down),
     responsableNombre: f.responsable_nombre,
     responsableParentesco: f.responsable_parentesco,
     telefonoPrincipal: f.telefono_principal,
@@ -104,11 +106,11 @@ export async function crearPaciente(db: SQLiteDatabase, entrada: PacienteEntrada
   await db.withTransactionAsync(async () => {
     await db.runAsync(
       `INSERT INTO pacientes (
-        id, numero_expediente, nombres, apellidos, fecha_nacimiento, sexo, semanas_gestacion,
+        id, numero_expediente, nombres, apellidos, fecha_nacimiento, sexo, semanas_gestacion, sindrome_down,
         responsable_nombre, responsable_parentesco, telefono_principal, telefono_secundario, whatsapp,
         correo, direccion, emergencia_nombre, emergencia_telefono,
         consentimiento_datos, consentimiento_whatsapp, es_demo, busqueda, creado_en, actualizado_en
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       p.numeroExpediente,
       p.nombres,
@@ -116,6 +118,7 @@ export async function crearPaciente(db: SQLiteDatabase, entrada: PacienteEntrada
       p.fechaNacimiento,
       p.sexo,
       p.semanasGestacion,
+      p.sindromeDown ? 1 : 0,
       p.responsableNombre,
       p.responsableParentesco,
       p.telefonoPrincipal,
@@ -147,7 +150,7 @@ export async function actualizarPaciente(db: SQLiteDatabase, id: string, entrada
   await db.withTransactionAsync(async () => {
     await db.runAsync(
       `UPDATE pacientes SET
-        numero_expediente = ?, nombres = ?, apellidos = ?, fecha_nacimiento = ?, sexo = ?, semanas_gestacion = ?,
+        numero_expediente = ?, nombres = ?, apellidos = ?, fecha_nacimiento = ?, sexo = ?, semanas_gestacion = ?, sindrome_down = ?,
         responsable_nombre = ?, responsable_parentesco = ?, telefono_principal = ?, telefono_secundario = ?,
         whatsapp = ?, correo = ?, direccion = ?, emergencia_nombre = ?, emergencia_telefono = ?,
         consentimiento_datos = ?, consentimiento_whatsapp = ?, busqueda = ?, actualizado_en = ?
@@ -158,6 +161,7 @@ export async function actualizarPaciente(db: SQLiteDatabase, id: string, entrada
       p.fechaNacimiento,
       p.sexo,
       p.semanasGestacion,
+      p.sindromeDown ? 1 : 0,
       p.responsableNombre,
       p.responsableParentesco,
       p.telefonoPrincipal,

@@ -2,7 +2,7 @@
 // anthro (0–5 años) y anthroplus (5–19 años) de la OMS.
 // Referencia: WHO Child Growth Standards, Methods and development, cap. 7.
 
-import type { LMS, TablaLMS } from './tipos';
+import type { LMS, TablaLMS, TablaLMSPorSexo } from './tipos';
 import type { SexoReferencia } from '../domain/types';
 
 /** Puntaje Z sin ajuste: ((y/M)^L − 1) / (L·S). Se usa en longitud/talla y perímetro cefálico. */
@@ -69,6 +69,29 @@ export function lmsInterpolado(tabla: TablaLMS, sexo: SexoReferencia, inferior: 
     m: a.m + fraccion * (b.m - a.m),
     s: a.s + fraccion * (b.s - a.s),
   };
+}
+
+/**
+ * LMS en el punto x de una tabla con inicio distinto por sexo, interpolando linealmente
+ * entre los dos puntos vecinos. Devuelve null fuera de la tabla.
+ */
+export function lmsPorSexo(tabla: TablaLMSPorSexo, sexo: SexoReferencia, x: number): LMS | null {
+  const t = sexo === 'M' ? tabla.M : tabla.F;
+  const n = t.v.length / 3;
+  const posicion = (x - t.inicio) / tabla.paso;
+  if (posicion < -1e-9 || posicion > n - 1 + 1e-9) return null;
+  const i = Math.min(Math.floor(posicion + 1e-9), n - 1);
+  const f = Math.max(0, posicion - i);
+  const a = { l: t.v[i * 3], m: t.v[i * 3 + 1], s: t.v[i * 3 + 2] };
+  if (f < 1e-9 || i === n - 1) return a;
+  const b = { l: t.v[i * 3 + 3], m: t.v[i * 3 + 4], s: t.v[i * 3 + 5] };
+  return { l: a.l + f * (b.l - a.l), m: a.m + f * (b.m - a.m), s: a.s + f * (b.s - a.s) };
+}
+
+/** Primer y último valor de x de una tabla por sexo. */
+export function extremosPorSexo(tabla: TablaLMSPorSexo, sexo: SexoReferencia): [number, number] {
+  const t = sexo === 'M' ? tabla.M : tabla.F;
+  return [t.inicio, t.inicio + (t.v.length / 3 - 1) * tabla.paso];
 }
 
 /** Redondeo a 2 decimales, como el software de la OMS. */

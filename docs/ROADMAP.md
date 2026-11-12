@@ -23,6 +23,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Validación contra los resultados del software de la OMS (ver [VALIDACION.md](VALIDACION.md)).
 - [x] Gráficas con curvas OMS en puntajes Z o percentiles y mediciones del paciente.
 - [x] Alertas de caída de puntaje Z y de paso por debajo de −2 DE.
+- [x] Curvas CDC para síndrome de Down (Zemel 2015): evaluación, interpretación por percentil y gráficas.
 - [ ] Revisión médica de interpretaciones y alertas.
 - [ ] Decidir curvas para prematuros antes de 40 semanas corregidas y uso de referencias CDC.
 
