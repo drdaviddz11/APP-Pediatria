@@ -23,7 +23,7 @@
     "react-native": "~0.88.0",
     "react-native-safe-area-context": "*",
     "react-native-screens": "*",
-    "react-native-svg": "*"
+    "react-native-svg": "15.16.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",
