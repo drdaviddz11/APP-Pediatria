@@ -3,7 +3,7 @@
 import { useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 import type { ConfigGrafica, LineaReferencia, PuntoPaciente } from '../crecimiento/curvas';
-import { colores } from './tema';
+import { ANCHO_MAXIMO, colores } from './tema';
 
 const ESTILO_LINEA: Record<LineaReferencia['tipo'], { color: string; grosor: number; guiones?: string }> = {
   mediana: { color: '#1E7B34', grosor: 2 },
@@ -24,7 +24,7 @@ function pasoAgradable(rango: number, marcas = 6): number {
 
 export function GraficaCrecimiento({ config, puntos }: { config: ConfigGrafica; puntos: PuntoPaciente[] }) {
   const { width } = useWindowDimensions();
-  const ancho = Math.max(280, width - 64);
+  const ancho = Math.max(280, Math.min(width, ANCHO_MAXIMO) - 64);
   const alto = 320;
   const { ejeX } = config;
 

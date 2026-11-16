@@ -3,7 +3,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert } from '../../src/ui/dialogo';
 import { obtenerCita, vincularPaciente } from '../../src/db/agenda';
 import { crearPaciente, sugerirNumeroExpediente } from '../../src/db/pacientes';
 import { Cargando } from '../../src/ui/componentes';

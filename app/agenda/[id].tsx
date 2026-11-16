@@ -3,7 +3,8 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Alert } from '../../src/ui/dialogo';
 import { AccionCita, accionesDisponibles, sePuedeRegistrarConsulta, sePuedeReprogramar } from '../../src/agenda/estados';
 import { ahoraMomento, fechaDeMomento, horaDeMomento, minutosEntre, textoFechaLarga } from '../../src/agenda/tiempo';
 import { Cita, NOMBRE_TIPO, nombreCita } from '../../src/agenda/tipos';

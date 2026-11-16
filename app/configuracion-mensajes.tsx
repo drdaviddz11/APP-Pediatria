@@ -3,7 +3,8 @@
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
+import { Alert } from '../src/ui/dialogo';
 import { guardarConfigControles, guardarConfigMensajes, leerConfigControles, leerConfigMensajes } from '../src/db/seguimiento';
 import { ConfigControles, EDADES_AAP, leerEdades } from '../src/seguimiento/controles';
 import { ConfigMensajes, MARCAS, NOMBRE_TIPO_MENSAJE, TipoMensaje } from '../src/seguimiento/mensajes';

@@ -1,7 +1,8 @@
 // Formulario de datos personales del paciente (se usa para crear y para editar).
 
 import { useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
+import { Alert } from './dialogo';
 import { aISO, calcularEdad, hoy, isoATextoUsuario, leerFechaUsuario, textoEdad } from '../domain/fechas';
 import type { Paciente, PacienteEntrada } from '../domain/types';
 import { leerNumero, Problema, validarPaciente } from '../domain/validacion';

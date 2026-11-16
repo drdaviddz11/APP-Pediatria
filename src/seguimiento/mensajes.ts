@@ -75,3 +75,8 @@ export function rellenarPlantilla(
 export function enlaceWhatsApp(numero: string, texto: string): string {
   return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
 }
+
+/** En la computadora: abre directamente WhatsApp Web con la conversación y el mensaje escrito (sin enviarlo). */
+export function enlaceWhatsAppWeb(numero: string, texto: string): string {
+  return `https://web.whatsapp.com/send?phone=${numero}&text=${encodeURIComponent(texto)}`;
+}

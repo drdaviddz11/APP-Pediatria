@@ -4,7 +4,8 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert } from '../../src/ui/dialogo';
 import { dentroDeHorario, horariosDisponibles, Intervalo, textoHorarioDia } from '../../src/agenda/disponibilidad';
 import {
   ahoraMomento,

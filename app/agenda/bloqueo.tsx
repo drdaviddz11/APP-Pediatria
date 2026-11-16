@@ -3,7 +3,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
+import { Alert } from '../../src/ui/dialogo';
 import { hoyISO, leerHoraUsuario, minutosDeHora, momento, sumarDias } from '../../src/agenda/tiempo';
 import { crearBloqueo } from '../../src/db/agenda';
 import { aISO, aTextoUsuario, leerFechaISO, leerFechaUsuario } from '../../src/domain/fechas';

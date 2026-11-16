@@ -4,7 +4,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 
 > ⚠️ **Versión de desarrollo.** Use solo pacientes ficticios. Los datos se guardan únicamente en el teléfono, todavía sin cifrado ni respaldo. No se debe usar en consulta real hasta completar la revisión de seguridad descrita en [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Qué hace esta versión (fases 1 a 4 y respaldos)
+## Qué hace esta versión (fases 1 a 4, respaldos y versión de computadora)
 
 - Lista de pacientes con búsqueda por nombre, apellidos, número de expediente, responsable o teléfono.
 - Expediente con datos personales, responsable, contacto de emergencia y consentimientos.
@@ -23,6 +23,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - **WhatsApp:** botón en el expediente y en cada cita, con mensajes editables y solo para responsables que lo autorizaron.
 - **Síndrome de Down:** al marcarlo en el expediente, la evaluación y las gráficas usan las curvas del CDC para niños con síndrome de Down (Zemel et al., Pediatrics 2015).
 - Alertas de caída del puntaje Z entre consultas.
+- **Funciona en iPhone y en computadora:** la misma app se abre en el navegador (Google Chrome o Microsoft Edge), con pantallas centradas para monitor, ventanas de confirmación propias y WhatsApp Web.
 - **Respaldo cifrado:** un archivo con todos los expedientes, consultas, citas y ajustes, protegido con contraseña (AES-256-GCM). Se guarda en iCloud Drive, Google Drive o en la computadora (AirDrop a la Mac), y se puede restaurar en otro teléfono. El panel avisa si el último respaldo tiene más de 7 días.
 
 ---
@@ -86,12 +87,24 @@ Si el teléfono no se conecta, pruebe:
 npx expo start --tunnel
 ```
 
+### 5. Abrir la app en la computadora
+
+Con la Terminal ya mostrando el código QR (paso 4), presione la tecla **w**. Se abre la app en el navegador, en la dirección **http://localhost:8081**.
+
+- Use **Google Chrome** o **Microsoft Edge**. Safari todavía no permite guardar la base de datos de la app.
+- Use siempre la misma dirección (`localhost:8081`): el navegador guarda los datos por dirección, y con otra la app aparecerá vacía.
+- Si borra los "datos de navegación" o "datos de sitios" del navegador, se borran también los datos de la app. Haga respaldos.
+- WhatsApp se abre en **WhatsApp Web**, siempre en la misma pestaña. La primera vez hay que vincularlo escaneando el código con el teléfono.
+
+**Importante:** los datos del teléfono y los de la computadora están separados; no se sincronizan solos. Para pasar los datos de uno a otro, haga un respaldo en uno y restáurelo en el otro (reemplaza todo). La sincronización automática entre equipos llegará con la fase 5 (servidor).
+
 ### Para actualizar a la última versión del código
 
 ```bash
 cd ~/Documents/APP-Pediatria
-git pull
+git checkout -- . && git pull
 npm install
+npx expo install --fix
 npx expo start
 ```
 
@@ -112,17 +125,19 @@ npx expo start
     whatsapp.tsx       Mensaje individual de WhatsApp
     configuracion-mensajes.tsx  Textos de los mensajes y criterios de control
     respaldo.tsx       Crear, guardar y restaurar respaldos cifrados
+    _layout.tsx        Navegación, base de datos, ventanas de confirmación y aviso de navegador no compatible
     consultas/[id].tsx Detalle de consulta y notas aclaratorias
   src/domain/          Reglas clínicas y de negocio (edad, validaciones). Sin dependencias de la interfaz.
   src/crecimiento/     Evaluación OMS: tablas LMS, puntajes Z, interpretación y curvas
   src/agenda/          Reglas de la agenda: horarios libres, traslapes, estados de las citas
   src/seguimiento/     A quién le toca control; plantillas y enlaces de WhatsApp
-  src/respaldo/        Formato del archivo de respaldo y cifrado (PBKDF2 + AES-256-GCM)
+  src/respaldo/        Formato del archivo de respaldo y cifrado (PBKDF2 + AES-256-GCM); archivos.ts (teléfono) y archivos.web.ts (computadora)
   scripts/             Generadores de las tablas OMS y CDC (síndrome de Down) a partir de las fuentes oficiales
   src/db/              Base de datos local: esquema, migraciones y consultas SQL
-  src/ui/              Componentes visuales y colores
+  src/ui/              Componentes visuales y colores; dialogo.tsx (avisos en teléfono y computadora), plataforma.ts
   docs/                Prompt maestro del proyecto y hoja de ruta
   ```
 - La interfaz solo usa las funciones de `src/db/`, para poder cambiar a un servidor (por ejemplo Supabase) más adelante sin reescribir las pantallas.
 - La base de datos impide modificar consultas y notas guardadas, y borrar expedientes que no sean de demostración.
 - Comprobar tipos: `npm run typecheck`.
+- **Versión web:** `metro.config.js` agrega los encabezados COOP/COEP y el formato `.wasm` que necesita `expo-sqlite` en el navegador (documentación de Expo SDK 58). Los archivos `*.web.ts` reemplazan a los `*.ts` solo en el navegador. Para publicarla en internet, el servidor debe enviar los mismos encabezados y usar https (fase 8, después de la revisión de seguridad).

@@ -1,12 +1,28 @@
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { Text, View } from 'react-native';
 import { migrarBaseDeDatos } from '../src/db/esquema';
 import { Cargando } from '../src/ui/componentes';
-import { colores } from '../src/ui/tema';
+import { AnfitrionDialogos } from '../src/ui/dialogo';
+import { pedirAlmacenamientoPersistente, problemaDelNavegador } from '../src/ui/plataforma';
+import { colores, espacio, texto } from '../src/ui/tema';
 
 export default function Raiz() {
+  useEffect(pedirAlmacenamientoPersistente, []);
+
+  // En la computadora: si el navegador no puede guardar la base de datos, se explica qué hacer.
+  const problema = problemaDelNavegador();
+  if (problema) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: espacio.xl, backgroundColor: colores.fondo }}>
+        <Text style={{ fontSize: texto.titulo, fontWeight: '700', color: colores.texto, marginBottom: espacio.m }}>PediaControl Pro</Text>
+        <Text style={{ fontSize: texto.normal, color: colores.texto, maxWidth: 520, textAlign: 'center', lineHeight: 24 }}>{problema}</Text>
+      </View>
+    );
+  }
+
   return (
     <Suspense fallback={<Cargando />}>
       <SQLiteProvider databaseName="pediacontrol.db" onInit={migrarBaseDeDatos} useSuspense>
@@ -41,6 +57,7 @@ export default function Raiz() {
           <Stack.Screen name="pacientes/[id]/crecimiento" options={{ title: 'Gráficas de crecimiento' }} />
           <Stack.Screen name="consultas/[id]" options={{ title: 'Consulta' }} />
         </Stack>
+        <AnfitrionDialogos />
       </SQLiteProvider>
     </Suspense>
   );

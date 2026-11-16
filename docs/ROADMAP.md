@@ -53,8 +53,19 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Atajos de fecha de seguimiento en la consulta (1 y 2 semanas, 1, 2, 3 y 6 meses).
 - [ ] Revisión médica del calendario de niño sano y de los textos de los mensajes.
 
+## Versión de computadora (adelantada a petición del médico)
+
+- [x] La misma app funciona en el navegador de la computadora (Chrome o Edge) con su propia base de datos local.
+- [x] Pantallas centradas con ancho máximo para monitor; gráficas ajustadas.
+- [x] Ventanas de confirmación propias en la computadora (las del sistema no existen en el navegador).
+- [x] Respaldo: descarga del archivo y carga desde la computadora; compatible con los respaldos del teléfono.
+- [x] WhatsApp Web en una sola pestaña.
+- [ ] Sincronización automática entre teléfono y computadora (requiere la fase 5).
+- [ ] Publicarla como página web con https o como app instalable (después de la revisión de seguridad).
+
 ## Fase 5 — Servidor, cuentas y seguridad
 
+- [ ] Sincronizar los datos entre teléfono y computadora.
 - [ ] Elegir y configurar Supabase (PostgreSQL) u otra alternativa, con costos explicados antes de contratar.
 - [ ] Inicio de sesión seguro, roles (médico, asistente) y separación estricta por consultorio (Row Level Security).
 - [x] Respaldo manual cifrado con contraseña (PBKDF2-SHA256 310 000 iteraciones + AES-256-GCM), guardado en iCloud Drive, Google Drive o la computadora, y restauración completa con verificación. Adelantado a petición del médico.

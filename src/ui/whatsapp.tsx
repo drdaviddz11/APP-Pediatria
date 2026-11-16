@@ -3,13 +3,24 @@
 // escrito y la persona toca Enviar. Así se usa el enlace oficial wa.me, sin riesgo de bloqueo.
 
 import { useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { enlaceWhatsApp, TipoMensaje } from '../seguimiento/mensajes';
+import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert } from './dialogo';
+import { EN_COMPUTADORA } from './plataforma';
+import { enlaceWhatsApp, enlaceWhatsAppWeb, TipoMensaje } from '../seguimiento/mensajes';
 import { Boton, EnlaceTexto, Seccion, estilos } from './componentes';
 import { colores, espacio, radio, texto } from './tema';
 
 /** Abre WhatsApp con el mensaje escrito. Devuelve false si no se pudo. */
 export async function abrirWhatsApp(numero: string, mensaje: string): Promise<boolean> {
+  if (EN_COMPUTADORA) {
+    // Siempre en la misma pestaña de WhatsApp Web, para no llenar el navegador de pestañas al enviar varios.
+    const ventana = window.open(enlaceWhatsAppWeb(numero, mensaje), 'pediacontrol-whatsapp');
+    if (!ventana) {
+      Alert.alert('No se pudo abrir WhatsApp Web', 'El navegador bloqueó la ventana. Permita las ventanas emergentes para esta página e intente de nuevo.');
+      return false;
+    }
+    return true;
+  }
   try {
     await Linking.openURL(enlaceWhatsApp(numero, mensaje));
     return true;
@@ -76,7 +87,9 @@ export function EnvioEnLote({
     <View>
       <Seccion titulo={`Enviar mensajes (${hechos} de ${mensajes.length})`}>
         <Text style={[estilos.suave, { marginBottom: espacio.s }]}>
-          Cada toque abre WhatsApp con el mensaje ya escrito. Revíselo, toque Enviar y regrese a esta app para el siguiente.
+          {EN_COMPUTADORA
+            ? 'Cada clic abre WhatsApp Web (en la misma pestaña) con el mensaje ya escrito. Revíselo, presione Enviar y regrese a esta pestaña para el siguiente.'
+            : 'Cada toque abre WhatsApp con el mensaje ya escrito. Revíselo, toque Enviar y regrese a esta app para el siguiente.'}
         </Text>
         {siguiente ? (
           <Boton texto={`Abrir WhatsApp: ${siguiente.nombre}`} onPress={() => void abrir(siguiente)} />

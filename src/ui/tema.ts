@@ -29,3 +29,6 @@ export const texto = {
   pequeno: 14,
   mini: 12,
 };
+
+/** Ancho máximo del contenido. En el teléfono no influye; en la computadora mantiene el texto centrado y legible. */
+export const ANCHO_MAXIMO = 1000;

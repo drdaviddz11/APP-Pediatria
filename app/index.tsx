@@ -14,6 +14,7 @@ import { edadDesdeISO } from '../src/domain/fechas';
 import { FilaCita } from '../src/ui/agenda';
 import { Aviso, PantallaSimple, Seccion, estilos } from '../src/ui/componentes';
 import { colores, espacio, radio, texto } from '../src/ui/tema';
+import { ESTE_EQUIPO } from '../src/ui/plataforma';
 
 interface Datos {
   hoy: Cita[];
@@ -104,7 +105,7 @@ export default function Panel() {
       <Stack.Screen options={{ title: 'PediaControl Pro' }} />
       <Text style={s.fecha}>Hoy, {textoFechaLarga(hoy, false)}</Text>
 
-      <Aviso>Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en este teléfono.</Aviso>
+      <Aviso>Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en {ESTE_EQUIPO.toLowerCase()}.</Aviso>
 
       {datos?.hayPacientes && (datos.diasRespaldo === null || datos.diasRespaldo > 7) && (
         <Pressable onPress={() => router.push('/respaldo')} style={({ pressed }) => [s.avisoRespaldo, pressed && { opacity: 0.8 }]}>

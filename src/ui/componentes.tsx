@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Problema } from '../domain/validacion';
-import { colores, espacio, radio, texto } from './tema';
+import { ANCHO_MAXIMO, colores, espacio, radio, texto } from './tema';
 
 /** Pantalla con desplazamiento que no queda tapada por el teclado. */
 export function PantallaFormulario({ children }: { children: ReactNode }) {
@@ -234,7 +234,8 @@ export function Aviso({ children, tono = 'aviso' }: { children: ReactNode; tono?
 
 export const estilos = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: colores.fondo },
-  contenido: { padding: espacio.l, paddingBottom: 48 },
+  // Centrado y con ancho máximo para que en la computadora no se estire a todo el monitor.
+  contenido: { padding: espacio.l, paddingBottom: 48, width: '100%', maxWidth: ANCHO_MAXIMO, alignSelf: 'center' },
   centro: { alignItems: 'center', justifyContent: 'center' },
   normal: { fontSize: texto.normal, color: colores.texto },
   pequeno: { fontSize: texto.pequeno, color: colores.texto, lineHeight: 20 },

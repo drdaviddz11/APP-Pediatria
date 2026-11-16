@@ -3,7 +3,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
+import { Alert } from '../../../src/ui/dialogo';
 import { guardarHistoria, obtenerHistoria } from '../../../src/db/pacientes';
 import { textoFechaHora } from '../../../src/domain/fechas';
 import type { HistoriaClinicaEntrada } from '../../../src/domain/types';

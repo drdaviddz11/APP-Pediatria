@@ -3,7 +3,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Alert } from '../../../src/ui/dialogo';
 import { sumarDias, sumarMeses } from '../../../src/agenda/tiempo';
 import { Pastilla } from '../../../src/ui/agenda';
 import { crearConsulta, ultimaConsultaConPeso } from '../../../src/db/consultas';

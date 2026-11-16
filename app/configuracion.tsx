@@ -3,7 +3,8 @@
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Alert } from '../src/ui/dialogo';
 import { validarConfiguracion } from '../src/agenda/disponibilidad';
 import { leerHoraUsuario, NOMBRES_DIA } from '../src/agenda/tiempo';
 import { ConfiguracionAgenda, RangoHorario } from '../src/agenda/tipos';
