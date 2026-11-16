@@ -4,7 +4,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 
 > ⚠️ **Versión de desarrollo.** Use solo pacientes ficticios. Los datos se guardan únicamente en el teléfono, todavía sin cifrado ni respaldo. No se debe usar en consulta real hasta completar la revisión de seguridad descrita en [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Qué hace esta versión (fases 1 a 4)
+## Qué hace esta versión (fases 1 a 4 y respaldos)
 
 - Lista de pacientes con búsqueda por nombre, apellidos, número de expediente, responsable o teléfono.
 - Expediente con datos personales, responsable, contacto de emergencia y consentimientos.
@@ -23,6 +23,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - **WhatsApp:** botón en el expediente y en cada cita, con mensajes editables y solo para responsables que lo autorizaron.
 - **Síndrome de Down:** al marcarlo en el expediente, la evaluación y las gráficas usan las curvas del CDC para niños con síndrome de Down (Zemel et al., Pediatrics 2015).
 - Alertas de caída del puntaje Z entre consultas.
+- **Respaldo cifrado:** un archivo con todos los expedientes, consultas, citas y ajustes, protegido con contraseña (AES-256-GCM). Se guarda en iCloud Drive, Google Drive o en la computadora (AirDrop a la Mac), y se puede restaurar en otro teléfono. El panel avisa si el último respaldo tiene más de 7 días.
 
 ---
 
@@ -110,11 +111,13 @@ npx expo start
     controles.tsx      Controles por agendar y recordatorios, con envío por WhatsApp
     whatsapp.tsx       Mensaje individual de WhatsApp
     configuracion-mensajes.tsx  Textos de los mensajes y criterios de control
+    respaldo.tsx       Crear, guardar y restaurar respaldos cifrados
     consultas/[id].tsx Detalle de consulta y notas aclaratorias
   src/domain/          Reglas clínicas y de negocio (edad, validaciones). Sin dependencias de la interfaz.
   src/crecimiento/     Evaluación OMS: tablas LMS, puntajes Z, interpretación y curvas
   src/agenda/          Reglas de la agenda: horarios libres, traslapes, estados de las citas
   src/seguimiento/     A quién le toca control; plantillas y enlaces de WhatsApp
+  src/respaldo/        Formato del archivo de respaldo y cifrado (PBKDF2 + AES-256-GCM)
   scripts/             Generadores de las tablas OMS y CDC (síndrome de Down) a partir de las fuentes oficiales
   src/db/              Base de datos local: esquema, migraciones y consultas SQL
   src/ui/              Componentes visuales y colores

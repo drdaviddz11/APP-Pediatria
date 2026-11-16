@@ -9,6 +9,7 @@ import { Cita, esActiva, nombreCita } from '../src/agenda/tipos';
 import { citasEntre, citasPorEstado } from '../src/db/agenda';
 import { buscarPacientes, ResumenPaciente } from '../src/db/pacientes';
 import { contarControlesPendientes } from '../src/db/seguimiento';
+import { diasDesde, leerInfoRespaldo, resumenActual } from '../src/db/respaldo';
 import { edadDesdeISO } from '../src/domain/fechas';
 import { FilaCita } from '../src/ui/agenda';
 import { Aviso, PantallaSimple, Seccion, estilos } from '../src/ui/componentes';
@@ -21,6 +22,9 @@ interface Datos {
   canceladas: Cita[];
   controles: number;
   citasManana: number;
+  /** Días desde el último respaldo (null: nunca); solo si hay pacientes. */
+  diasRespaldo: number | null;
+  hayPacientes: boolean;
 }
 
 const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
@@ -30,6 +34,8 @@ const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
   { texto: 'Nuevo paciente', icono: '👶', ruta: '/pacientes/nuevo' },
   { texto: 'Registrar consulta', icono: '🩺', ruta: { pathname: '/pacientes', params: { seleccionar: 'consulta' } } },
   { texto: 'Horario y ajustes', icono: '⚙️', ruta: '/configuracion' },
+  { texto: 'Respaldo', icono: '💾', ruta: '/respaldo' },
+  { texto: 'Controles y WhatsApp', icono: '💬', ruta: '/controles' },
 ];
 
 export default function Panel() {
@@ -46,16 +52,27 @@ export default function Panel() {
         const ahora = ahoraMomento();
         const dia = hoyISO();
         const en30 = `${sumarDias(dia, 30)}T00:00`;
-        const [citasHoy, proximas, pendientes, canceladas, controles, manana] = await Promise.all([
+        const [citasHoy, proximas, pendientes, canceladas, controles, manana, respaldo, totales] = await Promise.all([
           citasEntre(db, `${dia}T00:00`, `${sumarDias(dia, 1)}T00:00`),
           citasPorEstado(db, ['solicitada', 'pendiente', 'confirmada'], ahora, en30, 1),
           citasPorEstado(db, ['solicitada', 'pendiente'], ahora, en30, 10),
           citasPorEstado(db, ['cancelada'], `${dia}T00:00`, `${sumarDias(dia, 8)}T00:00`, 10),
           contarControlesPendientes(db, dia),
           citasPorEstado(db, ['solicitada', 'pendiente', 'confirmada'], `${sumarDias(dia, 1)}T00:00`, `${sumarDias(dia, 2)}T00:00`, 200),
+          leerInfoRespaldo(db),
+          resumenActual(db),
         ]);
         if (activo) {
-          setDatos({ hoy: citasHoy, proxima: proximas[0] ?? null, pendientes, canceladas, controles, citasManana: manana.length });
+          setDatos({
+            hoy: citasHoy,
+            proxima: proximas[0] ?? null,
+            pendientes,
+            canceladas,
+            controles,
+            citasManana: manana.length,
+            diasRespaldo: diasDesde(respaldo.ultimo),
+            hayPacientes: totales.pacientes > 0,
+          });
         }
       })();
       return () => {
@@ -88,6 +105,15 @@ export default function Panel() {
       <Text style={s.fecha}>Hoy, {textoFechaLarga(hoy, false)}</Text>
 
       <Aviso>Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en este teléfono.</Aviso>
+
+      {datos?.hayPacientes && (datos.diasRespaldo === null || datos.diasRespaldo > 7) && (
+        <Pressable onPress={() => router.push('/respaldo')} style={({ pressed }) => [s.avisoRespaldo, pressed && { opacity: 0.8 }]}>
+          <Text style={s.avisoRespaldoTexto}>
+            💾 {datos.diasRespaldo === null ? 'Todavía no hay respaldo de los expedientes.' : `Último respaldo hace ${datos.diasRespaldo} días.`}{' '}
+            Toque aquí para hacer uno.
+          </Text>
+        </Pressable>
+      )}
 
       <Pressable
         onPress={() => router.push('/controles')}
@@ -203,6 +229,15 @@ export default function Panel() {
 
 const s = StyleSheet.create({
   fecha: { fontSize: texto.titulo, fontWeight: '800', color: colores.texto, marginBottom: espacio.m },
+  avisoRespaldo: {
+    backgroundColor: colores.peligroSuave,
+    borderColor: colores.peligro,
+    borderWidth: 1,
+    borderRadius: radio.m,
+    padding: espacio.m,
+    marginBottom: espacio.m,
+  },
+  avisoRespaldoTexto: { color: colores.peligro, fontWeight: '700', fontSize: texto.pequeno },
   tarjetaControles: {
     backgroundColor: colores.primario,
     borderRadius: radio.l,

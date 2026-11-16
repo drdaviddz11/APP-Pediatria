@@ -57,7 +57,9 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 
 - [ ] Elegir y configurar Supabase (PostgreSQL) u otra alternativa, con costos explicados antes de contratar.
 - [ ] Inicio de sesión seguro, roles (médico, asistente) y separación estricta por consultorio (Row Level Security).
-- [ ] Cifrado en tránsito y en reposo, respaldos, bitácora de accesos.
+- [x] Respaldo manual cifrado con contraseña (PBKDF2-SHA256 310 000 iteraciones + AES-256-GCM), guardado en iCloud Drive, Google Drive o la computadora, y restauración completa con verificación. Adelantado a petición del médico.
+- [ ] Respaldo automático en el servidor.
+- [ ] Cifrado en tránsito y en reposo, bitácora de accesos.
 - [ ] Cierre de sesión automático y bloqueo con Face ID.
 - [ ] Exportación segura del expediente.
 - [ ] Políticas de conservación y eliminación.

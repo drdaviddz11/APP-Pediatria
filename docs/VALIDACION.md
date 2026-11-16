@@ -1,4 +1,4 @@
-# Validación de la evaluación nutricional
+# Validación de la evaluación nutricional y del respaldo
 
 ## Origen de las tablas
 
@@ -47,6 +47,20 @@ Las tablas de síndrome de Down se extraen del PDF con `scripts/generar_tablas_d
 | Síndrome de Down: 5382 percentiles impresos contra los L, M, S extraídos | Diferencia máxima 0.21 Z, explicada porque los percentiles están impresos con 1 decimal y L, M, S con 3 |
 | Síndrome de Down: 5328 percentiles impresos evaluados con la app completa (edad, interpolación, elección de tabla) | Diferencia máxima 0.21 Z |
 | Síndrome de Down: elección de tabla a los 24–36 meses, edema, comparación con la referencia general, 32 gráficas | Correctas |
+
+## Respaldo cifrado
+
+| Prueba | Resultado |
+|---|---|
+| SHA-256 y HMAC-SHA256 propios contra Node.js (longitudes 0–300, llaves cortas, de 64 y largas) | Idénticos |
+| PBKDF2-SHA256 propio contra Node.js (vector de RFC 7914 y casos aleatorios) | Idénticos |
+| Codificación UTF-8 (acentos, ñ, emojis) y base64 | Ida y vuelta exacta |
+| Crear respaldo y restaurarlo en una base vacía | Todas las tablas idénticas; las protecciones de la base siguen activas |
+| Contenido del archivo | No contiene ningún dato legible |
+| Contraseña incorrecta o archivo alterado | Se rechaza sin cambiar nada |
+| Respaldo dañado (referencias rotas) | Se rechaza y los datos del teléfono quedan intactos |
+| Respaldo de una versión más nueva de la app | Se rechaza con aviso |
+| Respaldo de una versión anterior | Se restaura; las columnas nuevas toman su valor por defecto |
 
 ## Pendiente antes de uso clínico
 

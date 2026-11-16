@@ -1,0 +1,235 @@
+// Respaldo cifrado de todos los datos: crear y guardar (Drive, iCloud, computadora) o restaurar.
+
+import * as DocumentPicker from 'expo-document-picker';
+import { File, Paths } from 'expo-file-system';
+import { router, useFocusEffect } from 'expo-router';
+import * as Sharing from 'expo-sharing';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useCallback, useState } from 'react';
+import { Alert, Text, View } from 'react-native';
+import {
+  diasDesde,
+  exportarDatos,
+  InfoRespaldo,
+  leerInfoRespaldo,
+  registrarRespaldoHecho,
+  restaurarDatos,
+  resumenActual,
+} from '../src/db/respaldo';
+import { textoFechaHora } from '../src/domain/fechas';
+import { cifrarRespaldo, descifrarRespaldo } from '../src/respaldo/cifrado';
+import { ArchivoRespaldo, leerArchivo, nombreArchivo, ResumenRespaldo, validarContrasena } from '../src/respaldo/formato';
+import { Aviso, Boton, Campo, Cargando, PantallaFormulario, Seccion, estilos } from '../src/ui/componentes';
+import { colores, espacio, texto } from '../src/ui/tema';
+
+function textoResumen(r: ResumenRespaldo): string {
+  return `${r.pacientes} pacientes · ${r.consultas} consultas · ${r.citas} citas`;
+}
+
+export default function Respaldo() {
+  const db = useSQLiteContext();
+  const [info, setInfo] = useState<InfoRespaldo | null>(null);
+  const [actual, setActual] = useState<ResumenRespaldo | null>(null);
+  const [contrasena, setContrasena] = useState('');
+  const [confirmacion, setConfirmacion] = useState('');
+  const [progreso, setProgreso] = useState<string | null>(null);
+  const [elegido, setElegido] = useState<{ nombre: string; archivo: ArchivoRespaldo } | null>(null);
+  const [contrasenaRestaurar, setContrasenaRestaurar] = useState('');
+
+  const cargar = useCallback(async () => {
+    const [i, r] = await Promise.all([leerInfoRespaldo(db), resumenActual(db)]);
+    setInfo(i);
+    setActual(r);
+  }, [db]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void cargar();
+    }, [cargar]),
+  );
+
+  if (!info || !actual) return <Cargando />;
+  const ocupado = progreso !== null;
+  const dias = diasDesde(info.ultimo);
+
+  async function crearRespaldo() {
+    const error = validarContrasena(contrasena, confirmacion);
+    if (error) {
+      Alert.alert('Contraseña', error);
+      return;
+    }
+    if (!(await Sharing.isAvailableAsync())) {
+      Alert.alert('No disponible', 'Este teléfono no permite compartir archivos desde la app.');
+      return;
+    }
+    let archivo: File | null = null;
+    try {
+      setProgreso('Preparando datos…');
+      const { contenido, resumen } = await exportarDatos(db);
+      const cifrado = await cifrarRespaldo(contenido, resumen, contrasena, (f) => setProgreso(`Protegiendo con la contraseña… ${Math.round(f * 100)} %`));
+      setProgreso('Guardando archivo…');
+      archivo = new File(Paths.cache, nombreArchivo(new Date()));
+      archivo.create({ overwrite: true });
+      await archivo.write(JSON.stringify(cifrado));
+      setProgreso(null);
+      await Sharing.shareAsync(archivo.uri, {
+        mimeType: 'application/octet-stream',
+        UTI: 'public.data',
+        dialogTitle: 'Guardar respaldo de PediaControl',
+      });
+      const guardado = archivo;
+      Alert.alert('¿Se guardó el respaldo?', 'Confirme solo si eligió dónde guardarlo (Archivos, Drive, AirDrop…).', [
+        { text: 'No', style: 'cancel', onPress: () => borrarTemporal(guardado) },
+        {
+          text: 'Sí, se guardó',
+          onPress: async () => {
+            borrarTemporal(guardado);
+            await registrarRespaldoHecho(db, resumen);
+            setContrasena('');
+            setConfirmacion('');
+            await cargar();
+          },
+        },
+      ]);
+    } catch (e) {
+      setProgreso(null);
+      if (archivo) borrarTemporal(archivo);
+      Alert.alert('No se pudo crear el respaldo', e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function borrarTemporal(f: File) {
+    try {
+      if (f.exists) f.delete();
+    } catch {
+      // El sistema limpia la carpeta temporal por su cuenta.
+    }
+  }
+
+  async function elegirArchivo() {
+    try {
+      const r = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      if (r.canceled) return;
+      const asset = r.assets[0];
+      const archivo = leerArchivo(await new File(asset.uri).text());
+      setElegido({ nombre: asset.name, archivo });
+      setContrasenaRestaurar('');
+    } catch (e) {
+      Alert.alert('No se pudo abrir el archivo', e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function confirmarRestaurar() {
+    if (!elegido || !actual) return;
+    if (!contrasenaRestaurar) {
+      Alert.alert('Contraseña', 'Escriba la contraseña con la que se creó el respaldo.');
+      return;
+    }
+    Alert.alert(
+      'Reemplazar todos los datos',
+      `Los datos de este teléfono (${textoResumen(actual)}) se reemplazarán por los del respaldo del ${textoFechaHora(
+        elegido.archivo.creado,
+      )} (${textoResumen(elegido.archivo.resumen)}).\n\nSi este teléfono tiene datos recientes, haga primero un respaldo.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Reemplazar', style: 'destructive', onPress: () => void restaurar() },
+      ],
+    );
+  }
+
+  async function restaurar() {
+    if (!elegido) return;
+    try {
+      const contenido = await descifrarRespaldo(elegido.archivo, contrasenaRestaurar, (f) =>
+        setProgreso(`Comprobando la contraseña… ${Math.round(f * 100)} %`),
+      );
+      setProgreso('Restaurando datos…');
+      const r = await restaurarDatos(db, contenido);
+      setProgreso(null);
+      setElegido(null);
+      Alert.alert('Respaldo restaurado', textoResumen(r), [{ text: 'Ir al inicio', onPress: () => router.replace('/') }]);
+    } catch (e) {
+      setProgreso(null);
+      Alert.alert('No se pudo restaurar', e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  return (
+    <PantallaFormulario>
+      <Seccion titulo="Estado">
+        <Text style={estilos.normal}>Este teléfono: {textoResumen(actual)}</Text>
+        {info.ultimo ? (
+          <Text style={[estilos.normal, dias != null && dias > 7 && { color: colores.peligro, fontWeight: '700' }]}>
+            Último respaldo: {textoFechaHora(info.ultimo)} ({dias === 0 ? 'hoy' : `hace ${dias} ${dias === 1 ? 'día' : 'días'}`})
+          </Text>
+        ) : (
+          <Text style={[estilos.normal, { color: colores.peligro, fontWeight: '700' }]}>Todavía no se ha hecho ningún respaldo.</Text>
+        )}
+      </Seccion>
+
+      {progreso && <Aviso tono="info">{progreso}</Aviso>}
+
+      <Seccion titulo="Hacer un respaldo">
+        <Text style={[estilos.pequeno, { marginBottom: espacio.m }]}>
+          Se crea un archivo con todos los expedientes, consultas, citas y ajustes, protegido con una contraseña (cifrado AES-256).
+          Sin la contraseña nadie puede leerlo, ni siquiera quien tenga el archivo.
+        </Text>
+        <Campo etiqueta="Contraseña del respaldo" value={contrasena} onChangeText={setContrasena} secureTextEntry autoCapitalize="none" autoCorrect={false} />
+        <Campo etiqueta="Repita la contraseña" value={confirmacion} onChangeText={setConfirmacion} secureTextEntry autoCapitalize="none" autoCorrect={false} />
+        <Aviso>
+          Anote la contraseña en un lugar seguro. Si se olvida, el respaldo no se podrá abrir. Use siempre la misma para no confundirse.
+        </Aviso>
+        <Boton texto="Crear respaldo y guardar" onPress={() => void crearRespaldo()} deshabilitado={ocupado} />
+      </Seccion>
+
+      <Seccion titulo="¿Dónde guardarlo?">
+        <View style={{ gap: espacio.s }}>
+          <Text style={estilos.pequeno}>
+            <Text style={{ fontWeight: '700' }}>Drive en internet: </Text>
+            en la ventana que aparece, elija "Guardar en Archivos" y luego iCloud Drive o Google Drive. También puede tocar el ícono de
+            Google Drive si tiene esa app.
+          </Text>
+          <Text style={estilos.pequeno}>
+            <Text style={{ fontWeight: '700' }}>Computadora Mac: </Text>
+            elija AirDrop y su Mac; el archivo llega a la carpeta Descargas. Si lo guardó en iCloud Drive, también aparece en el
+            Finder de la Mac.
+          </Text>
+          <Text style={estilos.pequeno}>
+            <Text style={{ fontWeight: '700' }}>Computadora Windows: </Text>
+            guárdelo en Google Drive o envíeselo por correo y descárguelo en la computadora.
+          </Text>
+          <Text style={[estilos.suave, { fontSize: texto.mini }]}>
+            Recomendación: guarde cada respaldo en dos lugares (por ejemplo, Drive y la computadora).
+          </Text>
+        </View>
+      </Seccion>
+
+      <Seccion titulo="Restaurar un respaldo">
+        <Text style={[estilos.pequeno, { marginBottom: espacio.m }]}>
+          Úselo en un teléfono nuevo o si se perdieron los datos. Reemplaza todos los datos de este teléfono por los del respaldo.
+        </Text>
+        {elegido ? (
+          <>
+            <Text style={[estilos.normal, { fontWeight: '700' }]}>{elegido.nombre}</Text>
+            <Text style={estilos.suave}>
+              Creado el {textoFechaHora(elegido.archivo.creado)} · {textoResumen(elegido.archivo.resumen)}
+            </Text>
+            <View style={{ height: espacio.m }} />
+            <Campo
+              etiqueta="Contraseña del respaldo"
+              value={contrasenaRestaurar}
+              onChangeText={setContrasenaRestaurar}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Boton texto="Restaurar este respaldo" variante="peligro" onPress={confirmarRestaurar} deshabilitado={ocupado} />
+            <Boton texto="Elegir otro archivo" variante="secundario" onPress={() => void elegirArchivo()} deshabilitado={ocupado} />
+          </>
+        ) : (
+          <Boton texto="Elegir archivo de respaldo" variante="secundario" onPress={() => void elegirArchivo()} deshabilitado={ocupado} />
+        )}
+      </Seccion>
+    </PantallaFormulario>
+  );
+}
