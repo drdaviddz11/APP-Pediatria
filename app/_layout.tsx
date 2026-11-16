@@ -22,7 +22,13 @@ export default function Raiz() {
             contentStyle: { backgroundColor: colores.fondo },
           }}
         >
-          <Stack.Screen name="index" options={{ title: 'Pacientes' }} />
+          <Stack.Screen name="index" options={{ title: 'PediaControl Pro' }} />
+          <Stack.Screen name="pacientes/index" options={{ title: 'Pacientes' }} />
+          <Stack.Screen name="agenda/index" options={{ title: 'Agenda' }} />
+          <Stack.Screen name="agenda/nueva" options={{ title: 'Nueva cita' }} />
+          <Stack.Screen name="agenda/[id]" options={{ title: 'Cita' }} />
+          <Stack.Screen name="agenda/bloqueo" options={{ title: 'Bloquear horario' }} />
+          <Stack.Screen name="configuracion" options={{ title: 'Horario y ajustes' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />

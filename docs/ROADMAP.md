@@ -13,7 +13,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Pacientes de demostración ficticios.
 - [x] Prueba en iPhone por el médico.
 
-## Fase 2 — Evaluación nutricional (actual)
+## Fase 2 — Evaluación nutricional
 
 - [x] Tablas LMS oficiales de la OMS 2006 (0–5 años) y 2007 (5–19 años), tomadas de los repositorios oficiales de la OMS.
 - [x] Puntaje Z y percentil con el método LMS, ajuste |Z| > 3, ajuste de 0.7 cm, límites de edad y talla de cada indicador.
@@ -27,12 +27,19 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [ ] Revisión médica de interpretaciones y alertas.
 - [ ] Decidir curvas para prematuros antes de 40 semanas corregidas y uso de referencias CDC.
 
-## Fase 3 — Panel principal y agenda
+## Fase 3 — Panel principal y agenda (actual)
 
-- [ ] Panel: citas del día, próxima consulta, pendientes de confirmar, canceladas, accesos rápidos.
-- [ ] Agenda diaria, semanal y mensual; duración configurable; primeras consultas y controles.
-- [ ] Estados de cita y prevención de reservas duplicadas.
-- [ ] Bloqueo de horarios.
+- [x] Panel de inicio: citas de hoy, próxima cita, sala de espera, pendientes de confirmación, canceladas, resumen del día, búsqueda rápida de expedientes y accesos directos.
+- [x] Agenda con vista diaria, semanal y mensual.
+- [x] Horario de atención por día (mañana y tarde), duración de primera consulta y de control, intervalo entre horarios; configurables.
+- [x] Nueva cita con horarios libres, hora manual, reprogramación y edición.
+- [x] Estados: solicitada, pendiente de confirmación, confirmada, paciente presente, completada, cancelada, no asistió.
+- [x] Prevención automática de citas duplicadas (en la app y con candados en la base de datos).
+- [x] Bloqueo de horarios (por horas o días completos).
+- [x] Citas de personas sin expediente y creación del expediente desde la cita.
+- [x] Registrar la consulta desde la cita (la cita queda completada y enlazada).
+- [x] Próximas citas en el expediente y "Agendar cita de seguimiento" desde la consulta.
+- [ ] Prueba en iPhone por el médico y ajuste del horario real del consultorio.
 
 ## Fase 4 — WhatsApp (primera etapa)
 

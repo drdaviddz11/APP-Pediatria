@@ -119,6 +119,86 @@ const MIGRACIONES: string[] = [
   `
   ALTER TABLE pacientes ADD COLUMN sindrome_down INTEGER NOT NULL DEFAULT 0;
   `,
+
+  // Versión 4: agenda (citas, bloqueos de horario y configuración)
+  // Las horas son hora local del consultorio, en texto "AAAA-MM-DDTHH:mm".
+  `
+  CREATE TABLE configuracion (
+    clave TEXT PRIMARY KEY NOT NULL,
+    valor TEXT NOT NULL
+  );
+
+  CREATE TABLE citas (
+    id TEXT PRIMARY KEY NOT NULL,
+    paciente_id TEXT REFERENCES pacientes (id) ON DELETE CASCADE,
+    nombre_contacto TEXT NOT NULL DEFAULT '',
+    telefono_contacto TEXT NOT NULL DEFAULT '',
+    inicio TEXT NOT NULL,
+    fin TEXT NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('primera', 'control')),
+    estado TEXT NOT NULL CHECK (estado IN ('solicitada', 'pendiente', 'confirmada', 'presente', 'completada', 'cancelada', 'no_asistio')),
+    motivo TEXT NOT NULL DEFAULT '',
+    notas TEXT NOT NULL DEFAULT '',
+    consulta_id TEXT REFERENCES consultas (id),
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT NOT NULL,
+    CHECK (fin > inicio),
+    CHECK (paciente_id IS NOT NULL OR nombre_contacto != '')
+  );
+  CREATE INDEX idx_citas_inicio ON citas (inicio);
+  CREATE INDEX idx_citas_paciente ON citas (paciente_id, inicio);
+
+  CREATE TABLE bloqueos (
+    id TEXT PRIMARY KEY NOT NULL,
+    inicio TEXT NOT NULL,
+    fin TEXT NOT NULL,
+    motivo TEXT NOT NULL DEFAULT '',
+    creado_en TEXT NOT NULL,
+    CHECK (fin > inicio)
+  );
+  CREATE INDEX idx_bloqueos_inicio ON bloqueos (inicio);
+
+  -- Candados contra citas duplicadas: una cita activa no puede traslaparse con otra cita activa
+  -- ni con un horario bloqueado. Las canceladas y las de "no asistió" liberan el horario.
+  CREATE TRIGGER citas_sin_traslape_al_crear BEFORE INSERT ON citas
+  WHEN NEW.estado NOT IN ('cancelada', 'no_asistio')
+  BEGIN
+    SELECT RAISE(ABORT, 'TRASLAPE: ya existe una cita en ese horario.')
+    WHERE EXISTS (
+      SELECT 1 FROM citas c
+      WHERE c.estado NOT IN ('cancelada', 'no_asistio') AND c.inicio < NEW.fin AND c.fin > NEW.inicio
+    );
+    SELECT RAISE(ABORT, 'BLOQUEO: ese horario está bloqueado.')
+    WHERE EXISTS (SELECT 1 FROM bloqueos b WHERE b.inicio < NEW.fin AND b.fin > NEW.inicio);
+  END;
+
+  CREATE TRIGGER citas_sin_traslape_al_cambiar BEFORE UPDATE ON citas
+  WHEN NEW.estado NOT IN ('cancelada', 'no_asistio')
+  BEGIN
+    SELECT RAISE(ABORT, 'TRASLAPE: ya existe una cita en ese horario.')
+    WHERE EXISTS (
+      SELECT 1 FROM citas c
+      WHERE c.id != NEW.id AND c.estado NOT IN ('cancelada', 'no_asistio') AND c.inicio < NEW.fin AND c.fin > NEW.inicio
+    );
+  END;
+
+  CREATE TRIGGER citas_sin_bloqueo_al_mover BEFORE UPDATE ON citas
+  WHEN NEW.estado NOT IN ('cancelada', 'no_asistio')
+    AND (NEW.inicio != OLD.inicio OR NEW.fin != OLD.fin OR OLD.estado IN ('cancelada', 'no_asistio'))
+  BEGIN
+    SELECT RAISE(ABORT, 'BLOQUEO: ese horario está bloqueado.')
+    WHERE EXISTS (SELECT 1 FROM bloqueos b WHERE b.inicio < NEW.fin AND b.fin > NEW.inicio);
+  END;
+
+  CREATE TRIGGER bloqueos_sin_citas BEFORE INSERT ON bloqueos
+  BEGIN
+    SELECT RAISE(ABORT, 'TRASLAPE: hay citas activas en ese horario.')
+    WHERE EXISTS (
+      SELECT 1 FROM citas c
+      WHERE c.estado NOT IN ('cancelada', 'no_asistio') AND c.inicio < NEW.fin AND c.fin > NEW.inicio
+    );
+  END;
+  `,
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

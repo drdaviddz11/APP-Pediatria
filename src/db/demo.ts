@@ -3,8 +3,47 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { aISO, deDate } from '../domain/fechas';
 import type { ConsultaEntrada, PacienteEntrada } from '../domain/types';
+import { horariosDisponibles } from '../agenda/disponibilidad';
+import { ahoraMomento, hoyISO, momento, sumarDias, sumarMinutos } from '../agenda/tiempo';
+import { duracionDeTipo, esActiva, EstadoCita, TipoCita } from '../agenda/tipos';
+import { bloqueosEntre, citasEntre, crearCita, leerConfiguracion } from './agenda';
 import { crearConsulta } from './consultas';
 import { crearPaciente, guardarHistoria, obtenerHistoria } from './pacientes';
+
+/** Agenda una cita de prueba en el primer día con horario libre a partir de `desdeDias`. */
+async function agendarDemo(
+  db: SQLiteDatabase,
+  pacienteId: string,
+  desdeDias: number,
+  tipo: TipoCita,
+  estado: EstadoCita,
+  motivo: string,
+): Promise<void> {
+  const config = await leerConfiguracion(db);
+  const duracion = duracionDeTipo(config, tipo);
+  for (let d = desdeDias; d < desdeDias + 14; d++) {
+    const fecha = sumarDias(hoyISO(), d);
+    const [citas, bloqueos] = await Promise.all([
+      citasEntre(db, `${fecha}T00:00`, `${sumarDias(fecha, 1)}T00:00`),
+      bloqueosEntre(db, `${fecha}T00:00`, `${sumarDias(fecha, 1)}T00:00`),
+    ]);
+    const libres = horariosDisponibles(fecha, duracion, config, [...citas.filter((c) => esActiva(c.estado)), ...bloqueos], ahoraMomento());
+    if (libres.length === 0) continue;
+    const inicio = momento(fecha, libres[Math.min(3, libres.length - 1)]);
+    await crearCita(db, {
+      pacienteId,
+      nombreContacto: '',
+      telefonoContacto: '',
+      inicio,
+      fin: sumarMinutos(inicio, duracion),
+      tipo,
+      estado,
+      motivo,
+      notas: 'Cita de demostración',
+    });
+    return;
+  }
+}
 
 function haceDias(dias: number): Date {
   const d = new Date();
@@ -129,7 +168,7 @@ export async function cargarPacientesDemo(db: SQLiteDatabase): Promise<void> {
     fechaSeguimiento: aISO(deDate(haceDias(-3))),
   }));
 
-  await crearPaciente(
+  const sofia = await crearPaciente(
     db,
     {
       ...BASE,
@@ -143,4 +182,13 @@ export async function cargarPacientesDemo(db: SQLiteDatabase): Promise<void> {
     },
     true,
   );
+
+  // Citas de prueba (si no hay horario libre, simplemente no se crean).
+  try {
+    await agendarDemo(db, ana, 0, 'control', 'confirmada', 'Control de niño sano');
+    await agendarDemo(db, luis, 1, 'control', 'pendiente', 'Revisión de infección respiratoria');
+    await agendarDemo(db, sofia, 2, 'primera', 'solicitada', 'Valoración nutricional');
+  } catch {
+    // Las citas de prueba son opcionales.
+  }
 }

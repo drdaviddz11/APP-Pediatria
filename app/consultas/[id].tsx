@@ -116,6 +116,18 @@ export default function VerConsulta() {
         <Dato etiqueta="Tratamiento" valor={consulta.tratamiento} />
         <Dato etiqueta="Indicaciones" valor={consulta.indicaciones} />
         <Dato etiqueta="Seguimiento" valor={consulta.fechaSeguimiento ? isoATextoCorto(consulta.fechaSeguimiento) : null} />
+        {consulta.fechaSeguimiento && (
+          <Boton
+            texto="Agendar cita de seguimiento"
+            variante="secundario"
+            onPress={() =>
+              router.push({
+                pathname: '/agenda/nueva',
+                params: { pacienteId: paciente.id, fecha: consulta.fechaSeguimiento as string, tipo: 'control' },
+              })
+            }
+          />
+        )}
       </Seccion>
 
       <Seccion titulo="Notas aclaratorias">

@@ -24,6 +24,7 @@ import {
   validarMediciones,
 } from '../../../src/domain/validacion';
 import { alertasTendencia, evaluarConsulta } from '../../../src/crecimiento/consulta';
+import { obtenerCita, vincularConsulta } from '../../../src/db/agenda';
 import { Boton, Campo, Cargando, Interruptor, ListaProblemas, PantallaFormulario, Seccion, Selector, estilos } from '../../../src/ui/componentes';
 import { EvaluacionNutricional } from '../../../src/ui/EvaluacionNutricional';
 
@@ -71,7 +72,8 @@ function num(texto: string): number | null {
 }
 
 export default function NuevaConsulta() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // citaId: la consulta se registra desde una cita de la agenda.
+  const { id, citaId } = useLocalSearchParams<{ id: string; citaId?: string }>();
   const db = useSQLiteContext();
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [anterior, setAnterior] = useState<Consulta | null>(null);
@@ -84,11 +86,17 @@ export default function NuevaConsulta() {
 
   useEffect(() => {
     void (async () => {
-      const [p, a] = await Promise.all([obtenerPaciente(db, id), ultimaConsultaConPeso(db, id)]);
+      const [p, a, cita] = await Promise.all([
+        obtenerPaciente(db, id),
+        ultimaConsultaConPeso(db, id),
+        citaId ? obtenerCita(db, citaId) : Promise.resolve(null),
+      ]);
       setPaciente(p);
       setAnterior(a);
+      // El motivo de la cita se propone como motivo de consulta.
+      if (cita?.motivo) setT((prev) => (prev.motivo ? prev : { ...prev, motivo: cita.motivo }));
     })();
-  }, [db, id]);
+  }, [db, id, citaId]);
 
   if (!paciente) return <Cargando />;
 
@@ -164,6 +172,17 @@ export default function NuevaConsulta() {
         indicaciones: t.indicaciones,
         fechaSeguimiento: seguimiento ? aISO(seguimiento) : null,
       });
+      if (citaId) {
+        // La consulta ya quedó guardada; si falla el enlace con la cita, solo se avisa.
+        try {
+          await vincularConsulta(db, citaId, consultaId);
+        } catch (e) {
+          Alert.alert(
+            'Consulta guardada',
+            `No se pudo marcar la cita como completada: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        }
+      }
       router.replace({ pathname: '/consultas/[id]', params: { id: consultaId } });
     } catch (e) {
       Alert.alert('No se pudo guardar', e instanceof Error ? e.message : String(e));

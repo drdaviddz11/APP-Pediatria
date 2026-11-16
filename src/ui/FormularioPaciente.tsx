@@ -28,7 +28,17 @@ interface Estado {
   consentimientoWhatsapp: boolean;
 }
 
-function estadoInicial(p?: Paciente, numeroSugerido = ''): Estado {
+/** Valores para prellenar un expediente nuevo (por ejemplo, desde una cita). */
+export type ValoresIniciales = Partial<Pick<Estado, 'nombres' | 'telefonoPrincipal' | 'whatsapp'>>;
+
+function estadoInicial(p?: Paciente, numeroSugerido = '', inicial: ValoresIniciales = {}): Estado {
+  return {
+    ...base(p, numeroSugerido),
+    ...(p ? {} : inicial),
+  };
+}
+
+function base(p: Paciente | undefined, numeroSugerido: string): Estado {
   return {
     numeroExpediente: p?.numeroExpediente ?? numeroSugerido,
     nombres: p?.nombres ?? '',
@@ -54,15 +64,17 @@ function estadoInicial(p?: Paciente, numeroSugerido = ''): Estado {
 export function FormularioPaciente({
   paciente,
   numeroSugerido,
+  inicial,
   textoGuardar,
   alGuardar,
 }: {
   paciente?: Paciente;
   numeroSugerido?: string;
+  inicial?: ValoresIniciales;
   textoGuardar: string;
   alGuardar: (datos: PacienteEntrada) => Promise<void>;
 }) {
-  const [e, setE] = useState<Estado>(() => estadoInicial(paciente, numeroSugerido));
+  const [e, setE] = useState<Estado>(() => estadoInicial(paciente, numeroSugerido, inicial));
   const [problemas, setProblemas] = useState<Problema[]>([]);
   const [guardando, setGuardando] = useState(false);
 

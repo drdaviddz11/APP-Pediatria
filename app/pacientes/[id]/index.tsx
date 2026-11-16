@@ -4,7 +4,11 @@ import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ahoraMomento } from '../../../src/agenda/tiempo';
+import { Cita, esActiva } from '../../../src/agenda/tipos';
+import { citasDePaciente } from '../../../src/db/agenda';
 import { listarConsultas } from '../../../src/db/consultas';
+import { FilaCita } from '../../../src/ui/agenda';
 import { obtenerHistoria, obtenerPaciente } from '../../../src/db/pacientes';
 import { edadDesdeISO, isoATextoCorto, leerFechaISO, textoEdadCorregida, textoFechaHora } from '../../../src/domain/fechas';
 import type { Consulta, HistoriaClinica, Paciente } from '../../../src/domain/types';
@@ -25,6 +29,7 @@ export default function Expediente() {
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [historia, setHistoria] = useState<HistoriaClinica | null>(null);
   const [consultas, setConsultas] = useState<Consulta[]>([]);
+  const [citas, setCitas] = useState<Cita[]>([]);
   const [noExiste, setNoExiste] = useState(false);
 
   useFocusEffect(
@@ -37,11 +42,16 @@ export default function Expediente() {
           setNoExiste(true);
           return;
         }
-        const [h, c] = await Promise.all([obtenerHistoria(db, id), listarConsultas(db, id)]);
+        const [h, c, ci] = await Promise.all([
+          obtenerHistoria(db, id),
+          listarConsultas(db, id),
+          citasDePaciente(db, id, ahoraMomento().slice(0, 10)),
+        ]);
         if (!activo) return;
         setPaciente(p);
         setHistoria(h);
         setConsultas(c);
+        setCitas(ci.filter((x) => esActiva(x.estado) && x.estado !== 'completada'));
       })();
       return () => {
         activo = false;
@@ -107,6 +117,21 @@ export default function Expediente() {
       />
 
       <View style={{ height: espacio.l }} />
+
+      <Seccion
+        titulo={`Próximas citas (${citas.length})`}
+        accion={
+          <EnlaceTexto texto="＋ Agendar" onPress={() => router.push({ pathname: '/agenda/nueva', params: { pacienteId: id } })} />
+        }
+      >
+        {citas.length === 0 ? (
+          <Text style={estilos.suave}>Sin citas programadas.</Text>
+        ) : (
+          citas.map((c) => (
+            <FilaCita key={c.id} cita={c} conFecha onPress={() => router.push({ pathname: '/agenda/[id]', params: { id: c.id } })} />
+          ))
+        )}
+      </Seccion>
 
       <Seccion titulo={`Consultas (${consultas.length})`}>
         {consultas.length === 0 ? (

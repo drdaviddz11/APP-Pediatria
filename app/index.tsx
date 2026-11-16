@@ -1,175 +1,229 @@
-// Pantalla principal: lista y búsqueda de pacientes.
+// Panel principal: el día de hoy de un vistazo y accesos rápidos.
 
-import { router, useFocusEffect } from 'expo-router';
+import { Href, router, Stack, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { borrarPacientesDemo, buscarPacientes, ResumenPaciente } from '../src/db/pacientes';
-import { cargarPacientesDemo } from '../src/db/demo';
-import { edadDesdeISO, textoFechaHora } from '../src/domain/fechas';
-import { Aviso, Boton, EnlaceTexto, estilos } from '../src/ui/componentes';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ahoraMomento, fechaDeMomento, hoyISO, sumarDias, textoFechaLarga } from '../src/agenda/tiempo';
+import { Cita, esActiva, nombreCita } from '../src/agenda/tipos';
+import { citasEntre, citasPorEstado } from '../src/db/agenda';
+import { buscarPacientes, ResumenPaciente } from '../src/db/pacientes';
+import { edadDesdeISO } from '../src/domain/fechas';
+import { FilaCita } from '../src/ui/agenda';
+import { Aviso, PantallaSimple, Seccion, estilos } from '../src/ui/componentes';
 import { colores, espacio, radio, texto } from '../src/ui/tema';
 
-export default function Pacientes() {
+interface Datos {
+  hoy: Cita[];
+  proxima: Cita | null;
+  pendientes: Cita[];
+  canceladas: Cita[];
+}
+
+const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
+  { texto: 'Agenda', icono: '📅', ruta: '/agenda' },
+  { texto: 'Pacientes', icono: '🗂️', ruta: '/pacientes' },
+  { texto: 'Nueva cita', icono: '＋', ruta: '/agenda/nueva' },
+  { texto: 'Nuevo paciente', icono: '👶', ruta: '/pacientes/nuevo' },
+  { texto: 'Registrar consulta', icono: '🩺', ruta: { pathname: '/pacientes', params: { seleccionar: 'consulta' } } },
+  { texto: 'Horario y ajustes', icono: '⚙️', ruta: '/configuracion' },
+];
+
+export default function Panel() {
   const db = useSQLiteContext();
+  const [datos, setDatos] = useState<Datos | null>(null);
   const [busqueda, setBusqueda] = useState('');
-  const [pacientes, setPacientes] = useState<ResumenPaciente[]>([]);
-  const [cargado, setCargado] = useState(false);
+  const [encontrados, setEncontrados] = useState<ResumenPaciente[]>([]);
+  const hoy = hoyISO();
 
-  const cargar = useCallback(
-    async (texto: string) => {
-      setPacientes(await buscarPacientes(db, texto));
-      setCargado(true);
-    },
-    [db],
-  );
-
-  // Recargar cada vez que se vuelve a esta pantalla (por ejemplo, después de crear un paciente).
   useFocusEffect(
     useCallback(() => {
-      void cargar(busqueda);
-    }, [cargar, busqueda]),
+      let activo = true;
+      void (async () => {
+        const ahora = ahoraMomento();
+        const dia = hoyISO();
+        const en30 = `${sumarDias(dia, 30)}T00:00`;
+        const [citasHoy, proximas, pendientes, canceladas] = await Promise.all([
+          citasEntre(db, `${dia}T00:00`, `${sumarDias(dia, 1)}T00:00`),
+          citasPorEstado(db, ['solicitada', 'pendiente', 'confirmada'], ahora, en30, 1),
+          citasPorEstado(db, ['solicitada', 'pendiente'], ahora, en30, 10),
+          citasPorEstado(db, ['cancelada'], `${dia}T00:00`, `${sumarDias(dia, 8)}T00:00`, 10),
+        ]);
+        if (activo) setDatos({ hoy: citasHoy, proxima: proximas[0] ?? null, pendientes, canceladas });
+      })();
+      return () => {
+        activo = false;
+      };
+    }, [db]),
   );
 
-  async function agregarDemo() {
-    try {
-      await cargarPacientesDemo(db);
-      await cargar(busqueda);
-    } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : String(e));
-    }
+  async function buscar(t: string) {
+    setBusqueda(t);
+    setEncontrados(t.trim().length >= 2 ? await buscarPacientes(db, t, 5) : []);
   }
 
-  function quitarDemo() {
-    Alert.alert('Borrar pacientes de demostración', 'Se borrarán solo los pacientes ficticios marcados como DEMO.', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Borrar',
-        style: 'destructive',
-        onPress: async () => {
-          await borrarPacientesDemo(db);
-          await cargar(busqueda);
-        },
-      },
-    ]);
-  }
-
-  const hayDemo = pacientes.some((p) => p.esDemo);
+  const abrirCita = (c: Cita) => router.push({ pathname: '/agenda/[id]', params: { id: c.id } });
+  const citasHoy = datos?.hoy ?? [];
+  const activasHoy = citasHoy.filter((c) => esActiva(c.estado));
+  const enEspera = citasHoy.filter((c) => c.estado === 'presente');
+  const personasHoy = new Set(activasHoy.map((c) => c.pacienteId ?? `contacto:${nombreCita(c)}`)).size;
+  const resumen = [
+    { texto: 'Pacientes programados', valor: personasHoy },
+    { texto: 'Confirmadas', valor: citasHoy.filter((c) => c.estado === 'confirmada').length },
+    { texto: 'Por confirmar', valor: citasHoy.filter((c) => c.estado === 'solicitada' || c.estado === 'pendiente').length },
+    { texto: 'Atendidas', valor: citasHoy.filter((c) => c.estado === 'completada').length },
+    { texto: 'Canceladas / no asistió', valor: citasHoy.length - activasHoy.length },
+  ];
 
   return (
-    <View style={estilos.pantalla}>
-      <View style={s.barraBusqueda}>
+    <PantallaSimple>
+      <Stack.Screen options={{ title: 'PediaControl Pro' }} />
+      <Text style={s.fecha}>Hoy, {textoFechaLarga(hoy, false)}</Text>
+
+      <Aviso>Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en este teléfono.</Aviso>
+
+      <View style={s.accesos}>
+        {ACCESOS.map((a) => (
+          <Pressable
+            key={a.texto}
+            onPress={() => router.push(a.ruta)}
+            accessibilityRole="button"
+            style={({ pressed }) => [s.acceso, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={s.accesoIcono}>{a.icono}</Text>
+            <Text style={s.accesoTexto}>{a.texto}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={s.buscadorCaja}>
         <TextInput
           style={s.buscador}
           value={busqueda}
-          onChangeText={setBusqueda}
-          placeholder="Buscar por nombre, expediente o teléfono"
+          onChangeText={buscar}
+          placeholder="Abrir expediente: nombre, expediente o teléfono"
           placeholderTextColor="#98A6B0"
-          clearButtonMode="while-editing"
           autoCorrect={false}
-          returnKeyType="search"
+          clearButtonMode="while-editing"
         />
+        {encontrados.map((p) => (
+          <Pressable
+            key={p.id}
+            style={({ pressed }) => [s.encontrado, pressed && { opacity: 0.7 }]}
+            onPress={() => {
+              setBusqueda('');
+              setEncontrados([]);
+              router.push({ pathname: '/pacientes/[id]', params: { id: p.id } });
+            }}
+          >
+            <Text style={estilos.normal}>
+              {p.apellidos}, {p.nombres}
+            </Text>
+            <Text style={estilos.suave}>
+              {p.numeroExpediente} · {edadDesdeISO(p.fechaNacimiento)}
+            </Text>
+          </Pressable>
+        ))}
+        {busqueda.trim().length >= 2 && encontrados.length === 0 && (
+          <Text style={[estilos.suave, { padding: espacio.s }]}>Sin resultados.</Text>
+        )}
       </View>
 
-      <FlatList
-        data={pacientes}
-        keyExtractor={(p) => p.id}
-        contentContainerStyle={{ padding: espacio.l, paddingBottom: 120 }}
-        keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={
-          <Aviso>
-            Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en este teléfono y todavía no
-            tienen cifrado ni respaldo.
-          </Aviso>
-        }
-        ListEmptyComponent={
-          cargado ? (
-            <View style={s.vacio}>
-              <Text style={[estilos.normal, { textAlign: 'center' }]}>
-                {busqueda ? 'No se encontraron pacientes.' : 'Todavía no hay pacientes registrados.'}
-              </Text>
-              {!busqueda && <Boton texto="Cargar pacientes de demostración" variante="secundario" onPress={agregarDemo} />}
-            </View>
-          ) : null
-        }
-        ListFooterComponent={hayDemo && !busqueda ? <EnlaceTexto texto="Borrar pacientes de demostración" onPress={quitarDemo} /> : null}
-        renderItem={({ item }) => (
-          <Pressable
-            style={({ pressed }) => [s.tarjeta, pressed && { opacity: 0.7 }]}
-            onPress={() => router.push({ pathname: '/pacientes/[id]', params: { id: item.id } })}
-          >
-            <View style={[s.avatar, { backgroundColor: item.sexo === 'F' ? colores.ninia : colores.ninio }]}>
-              <Text style={s.avatarTexto}>
-                {item.nombres.charAt(0)}
-                {item.apellidos.charAt(0)}
-              </Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.nombre} numberOfLines={1}>
-                {item.apellidos}, {item.nombres}
-              </Text>
-              <Text style={estilos.suave}>
-                {item.numeroExpediente} · {edadDesdeISO(item.fechaNacimiento)}
-                {item.esDemo ? ' · DEMO' : ''}
-              </Text>
-              <Text style={[estilos.suave, { fontSize: texto.mini }]}>
-                {item.ultimaConsulta ? `Última consulta: ${textoFechaHora(item.ultimaConsulta)}` : 'Sin consultas'}
-              </Text>
-            </View>
-          </Pressable>
-        )}
-      />
+      <View style={s.resumen}>
+        {resumen.map((r) => (
+          <View key={r.texto} style={s.resumenItem}>
+            <Text style={s.resumenValor}>{r.valor}</Text>
+            <Text style={s.resumenTexto}>{r.texto}</Text>
+          </View>
+        ))}
+      </View>
 
-      <Pressable style={s.botonFlotante} onPress={() => router.push('/pacientes/nuevo')} accessibilityLabel="Nuevo paciente">
-        <Text style={s.botonFlotanteTexto}>＋ Nuevo paciente</Text>
-      </Pressable>
-    </View>
+      {enEspera.length > 0 && (
+        <Seccion titulo={`En sala de espera (${enEspera.length})`}>
+          {enEspera.map((c) => (
+            <FilaCita key={c.id} cita={c} onPress={() => abrirCita(c)} />
+          ))}
+        </Seccion>
+      )}
+
+      <Seccion titulo="Próxima cita">
+        {datos?.proxima ? (
+          <FilaCita cita={datos.proxima} onPress={() => abrirCita(datos.proxima as Cita)} conFecha={fechaDeMomento(datos.proxima.inicio) !== hoy} />
+        ) : (
+          <Text style={estilos.suave}>No hay citas próximas en los siguientes 30 días.</Text>
+        )}
+      </Seccion>
+
+      <Seccion titulo={`Citas de hoy (${citasHoy.length})`}>
+        {citasHoy.length === 0 ? (
+          <Text style={estilos.suave}>No hay citas para hoy.</Text>
+        ) : (
+          citasHoy.map((c) => <FilaCita key={c.id} cita={c} onPress={() => abrirCita(c)} />)
+        )}
+      </Seccion>
+
+      <Seccion titulo={`Pendientes de confirmación (${datos?.pendientes.length ?? 0})`}>
+        {(datos?.pendientes.length ?? 0) === 0 ? (
+          <Text style={estilos.suave}>Ninguna cita por confirmar.</Text>
+        ) : (
+          datos?.pendientes.map((c) => <FilaCita key={c.id} cita={c} onPress={() => abrirCita(c)} conFecha />)
+        )}
+      </Seccion>
+
+      <Seccion titulo="Canceladas (hoy y próximos 7 días)">
+        {(datos?.canceladas.length ?? 0) === 0 ? (
+          <Text style={estilos.suave}>Sin cancelaciones.</Text>
+        ) : (
+          datos?.canceladas.map((c) => <FilaCita key={c.id} cita={c} onPress={() => abrirCita(c)} conFecha />)
+        )}
+      </Seccion>
+    </PantallaSimple>
   );
 }
 
 const s = StyleSheet.create({
-  barraBusqueda: {
-    padding: espacio.m,
+  fecha: { fontSize: texto.titulo, fontWeight: '800', color: colores.texto, marginBottom: espacio.m },
+  accesos: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio.s, marginBottom: espacio.m },
+  acceso: {
+    width: '48.5%',
     backgroundColor: colores.superficie,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colores.borde,
-  },
-  buscador: {
-    backgroundColor: colores.fondo,
     borderRadius: radio.m,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    paddingVertical: espacio.m,
     paddingHorizontal: espacio.m,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacio.s,
+  },
+  accesoIcono: { fontSize: 20, color: colores.primario, fontWeight: '800' },
+  accesoTexto: { fontSize: texto.pequeno, fontWeight: '700', color: colores.texto, flexShrink: 1 },
+  buscadorCaja: { marginBottom: espacio.l },
+  buscador: {
+    backgroundColor: colores.superficie,
+    borderRadius: radio.m,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    paddingHorizontal: espacio.m,
+    paddingVertical: 12,
     fontSize: texto.normal,
     color: colores.texto,
   },
-  tarjeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espacio.m,
+  encontrado: {
     backgroundColor: colores.superficie,
-    padding: espacio.m,
+    paddingHorizontal: espacio.m,
+    paddingVertical: espacio.s,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colores.borde,
+  },
+  resumen: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio.s, marginBottom: espacio.l },
+  resumenItem: {
+    flexGrow: 1,
+    minWidth: '30%',
+    backgroundColor: colores.primarioSuave,
     borderRadius: radio.m,
-    marginBottom: espacio.s,
-    borderWidth: 1,
-    borderColor: colores.borde,
+    padding: espacio.m,
   },
-  avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  avatarTexto: { color: '#FFFFFF', fontWeight: '700', fontSize: texto.normal },
-  nombre: { fontSize: texto.normal, fontWeight: '700', color: colores.texto },
-  vacio: { paddingVertical: 32, gap: espacio.m },
-  botonFlotante: {
-    position: 'absolute',
-    right: espacio.l,
-    bottom: 32,
-    backgroundColor: colores.primario,
-    borderRadius: 28,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
-  botonFlotanteTexto: { color: '#FFFFFF', fontWeight: '700', fontSize: texto.normal },
+  resumenValor: { fontSize: 24, fontWeight: '800', color: colores.primarioOscuro, fontVariant: ['tabular-nums'] },
+  resumenTexto: { fontSize: texto.mini, fontWeight: '600', color: colores.primarioOscuro },
 });

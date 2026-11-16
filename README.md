@@ -4,7 +4,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 
 > ⚠️ **Versión de desarrollo.** Use solo pacientes ficticios. Los datos se guardan únicamente en el teléfono, todavía sin cifrado ni respaldo. No se debe usar en consulta real hasta completar la revisión de seguridad descrita en [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Qué hace esta versión (fases 1 y 2)
+## Qué hace esta versión (fases 1, 2 y 3)
 
 - Lista de pacientes con búsqueda por nombre, apellidos, número de expediente, responsable o teléfono.
 - Expediente con datos personales, responsable, contacto de emergencia y consentimientos.
@@ -17,6 +17,8 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - Pacientes de demostración ficticios para practicar.
 - **Evaluación nutricional OMS** en cada consulta: puntaje Z, percentil e interpretación de peso/edad, talla/edad, peso/talla, IMC/edad y perímetro cefálico, con las tablas oficiales de la OMS 2006 (0–5 años) y 2007 (5–19 años). Se actualiza en vivo al escribir las medidas. Validada contra el software de la OMS ([docs/VALIDACION.md](docs/VALIDACION.md)).
 - **Gráficas de crecimiento** con curvas OMS en puntajes Z o percentiles y las mediciones del paciente.
+- **Panel principal:** citas de hoy, próxima cita, sala de espera, pendientes de confirmación, canceladas, resumen del día y búsqueda rápida de expedientes.
+- **Agenda** diaria, semanal y mensual: horarios libres, reprogramación, estados de la cita, bloqueo de horarios y prevención de citas duplicadas. El horario del consultorio y la duración de las consultas se ajustan en **Horario y ajustes**.
 - **Síndrome de Down:** al marcarlo en el expediente, la evaluación y las gráficas usan las curvas del CDC para niños con síndrome de Down (Zemel et al., Pediatrics 2015).
 - Alertas de caída del puntaje Z entre consultas.
 
@@ -99,11 +101,14 @@ npx expo start
 - **Estructura:**
   ```
   app/                 Pantallas (cada archivo es una ruta)
-    index.tsx          Lista y búsqueda de pacientes
-    pacientes/         Nuevo, expediente, editar, historia clínica, nueva consulta
+    index.tsx          Panel principal
+    pacientes/         Lista, nuevo, expediente, editar, historia clínica, nueva consulta, gráficas
+    agenda/            Agenda (día/semana/mes), nueva cita, detalle de cita, bloquear horario
+    configuracion.tsx  Horario de atención y duración de las consultas
     consultas/[id].tsx Detalle de consulta y notas aclaratorias
   src/domain/          Reglas clínicas y de negocio (edad, validaciones). Sin dependencias de la interfaz.
   src/crecimiento/     Evaluación OMS: tablas LMS, puntajes Z, interpretación y curvas
+  src/agenda/          Reglas de la agenda: horarios libres, traslapes, estados de las citas
   scripts/             Generadores de las tablas OMS y CDC (síndrome de Down) a partir de las fuentes oficiales
   src/db/              Base de datos local: esquema, migraciones y consultas SQL
   src/ui/              Componentes visuales y colores
