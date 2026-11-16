@@ -1,8 +1,16 @@
 // Acceso a datos de la agenda: citas, bloqueos de horario y configuración.
 
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { conflictos } from '../agenda/disponibilidad';
-import { horaDeMomento, textoFechaCorta, fechaDeMomento } from '../agenda/tiempo';
+import { conflictos, horariosDisponibles, rangosDelDia } from '../agenda/disponibilidad';
+import {
+  ahoraMomento,
+  fechaDeMomento,
+  horaDeMomento,
+  momento,
+  sumarDias,
+  sumarMinutos,
+  textoFechaCorta,
+} from '../agenda/tiempo';
 import {
   Bloqueo,
   Cita,
@@ -71,6 +79,7 @@ interface FilaCita {
   numero_expediente: string | null;
   paciente_whatsapp: string | null;
   paciente_telefono: string | null;
+  paciente_consentimiento_whatsapp: number | null;
 }
 
 const SELECT_CITA = `
@@ -78,7 +87,8 @@ const SELECT_CITA = `
     CASE WHEN p.id IS NULL THEN NULL ELSE p.nombres || ' ' || p.apellidos END AS paciente_nombre,
     p.numero_expediente AS numero_expediente,
     p.whatsapp AS paciente_whatsapp,
-    p.telefono_principal AS paciente_telefono
+    p.telefono_principal AS paciente_telefono,
+    p.consentimiento_whatsapp AS paciente_consentimiento_whatsapp
   FROM citas c
   LEFT JOIN pacientes p ON p.id = c.paciente_id`;
 
@@ -101,6 +111,7 @@ function aCita(f: FilaCita): Cita {
     numeroExpediente: f.numero_expediente,
     pacienteWhatsapp: f.paciente_whatsapp,
     pacienteTelefono: f.paciente_telefono,
+    pacienteConsentimientoWhatsapp: f.paciente_consentimiento_whatsapp == null ? null : f.paciente_consentimiento_whatsapp === 1,
   };
 }
 
@@ -277,6 +288,33 @@ export async function citasPorEstado(
     limite,
   );
   return filas.map(aCita);
+}
+
+/**
+ * Primer horario libre de `duracion` minutos desde `desdeFecha` (inclusive), buscando hasta `maxDias` días.
+ * Respeta el horario de atención, las citas activas, los bloqueos y la hora actual.
+ */
+export async function buscarHorarioLibre(
+  db: SQLiteDatabase,
+  desdeFecha: string,
+  duracion: number,
+  maxDias = 30,
+): Promise<{ inicio: string; fin: string } | null> {
+  const config = await leerConfiguracion(db);
+  const ahora = ahoraMomento();
+  for (let d = 0; d < maxDias; d++) {
+    const fecha = sumarDias(desdeFecha, d);
+    if (rangosDelDia(config, fecha).length === 0) continue;
+    const desde = `${fecha}T00:00`;
+    const hasta = `${sumarDias(fecha, 1)}T00:00`;
+    const [citas, bloqueos] = await Promise.all([citasEntre(db, desde, hasta), bloqueosEntre(db, desde, hasta)]);
+    const libres = horariosDisponibles(fecha, duracion, config, [...citas.filter((c) => esActiva(c.estado)), ...bloqueos], ahora);
+    if (libres.length > 0) {
+      const inicio = momento(fecha, libres[0]);
+      return { inicio, fin: sumarMinutos(inicio, duracion) };
+    }
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

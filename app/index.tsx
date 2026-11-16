@@ -8,6 +8,7 @@ import { ahoraMomento, fechaDeMomento, hoyISO, sumarDias, textoFechaLarga } from
 import { Cita, esActiva, nombreCita } from '../src/agenda/tipos';
 import { citasEntre, citasPorEstado } from '../src/db/agenda';
 import { buscarPacientes, ResumenPaciente } from '../src/db/pacientes';
+import { contarControlesPendientes } from '../src/db/seguimiento';
 import { edadDesdeISO } from '../src/domain/fechas';
 import { FilaCita } from '../src/ui/agenda';
 import { Aviso, PantallaSimple, Seccion, estilos } from '../src/ui/componentes';
@@ -18,6 +19,8 @@ interface Datos {
   proxima: Cita | null;
   pendientes: Cita[];
   canceladas: Cita[];
+  controles: number;
+  citasManana: number;
 }
 
 const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
@@ -43,13 +46,17 @@ export default function Panel() {
         const ahora = ahoraMomento();
         const dia = hoyISO();
         const en30 = `${sumarDias(dia, 30)}T00:00`;
-        const [citasHoy, proximas, pendientes, canceladas] = await Promise.all([
+        const [citasHoy, proximas, pendientes, canceladas, controles, manana] = await Promise.all([
           citasEntre(db, `${dia}T00:00`, `${sumarDias(dia, 1)}T00:00`),
           citasPorEstado(db, ['solicitada', 'pendiente', 'confirmada'], ahora, en30, 1),
           citasPorEstado(db, ['solicitada', 'pendiente'], ahora, en30, 10),
           citasPorEstado(db, ['cancelada'], `${dia}T00:00`, `${sumarDias(dia, 8)}T00:00`, 10),
+          contarControlesPendientes(db, dia),
+          citasPorEstado(db, ['solicitada', 'pendiente', 'confirmada'], `${sumarDias(dia, 1)}T00:00`, `${sumarDias(dia, 2)}T00:00`, 200),
         ]);
-        if (activo) setDatos({ hoy: citasHoy, proxima: proximas[0] ?? null, pendientes, canceladas });
+        if (activo) {
+          setDatos({ hoy: citasHoy, proxima: proximas[0] ?? null, pendientes, canceladas, controles, citasManana: manana.length });
+        }
       })();
       return () => {
         activo = false;
@@ -81,6 +88,19 @@ export default function Panel() {
       <Text style={s.fecha}>Hoy, {textoFechaLarga(hoy, false)}</Text>
 
       <Aviso>Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en este teléfono.</Aviso>
+
+      <Pressable
+        onPress={() => router.push('/controles')}
+        accessibilityRole="button"
+        style={({ pressed }) => [s.tarjetaControles, pressed && { opacity: 0.8 }]}
+      >
+        <Text style={s.tarjetaTitulo}>📋 Controles y recordatorios</Text>
+        <Text style={s.tarjetaTexto}>
+          {datos?.controles ?? 0} {datos?.controles === 1 ? 'paciente necesita' : 'pacientes necesitan'} cita de control ·{' '}
+          {datos?.citasManana ?? 0} {datos?.citasManana === 1 ? 'cita' : 'citas'} mañana por recordar
+        </Text>
+        <Text style={s.tarjetaAccion}>Ver lista y enviar WhatsApp ›</Text>
+      </Pressable>
 
       <View style={s.accesos}>
         {ACCESOS.map((a) => (
@@ -183,6 +203,16 @@ export default function Panel() {
 
 const s = StyleSheet.create({
   fecha: { fontSize: texto.titulo, fontWeight: '800', color: colores.texto, marginBottom: espacio.m },
+  tarjetaControles: {
+    backgroundColor: colores.primario,
+    borderRadius: radio.l,
+    padding: espacio.l,
+    marginBottom: espacio.m,
+    gap: 4,
+  },
+  tarjetaTitulo: { color: '#FFFFFF', fontSize: texto.subtitulo, fontWeight: '800' },
+  tarjetaTexto: { color: '#FFFFFF', fontSize: texto.pequeno },
+  tarjetaAccion: { color: '#FFFFFF', fontSize: texto.pequeno, fontWeight: '800', marginTop: 4 },
   accesos: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio.s, marginBottom: espacio.m },
   acceso: {
     width: '48.5%',

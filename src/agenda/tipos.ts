@@ -57,6 +57,8 @@ export interface Cita {
   numeroExpediente: string | null;
   pacienteWhatsapp: string | null;
   pacienteTelefono: string | null;
+  /** El responsable autorizó mensajes administrativos por WhatsApp (null si no tiene expediente). */
+  pacienteConsentimientoWhatsapp: boolean | null;
 }
 
 export interface Bloqueo {

@@ -145,6 +145,7 @@ export default function Configuracion() {
       </Seccion>
 
       <Boton texto={guardando ? 'Guardando…' : 'Guardar horario'} onPress={guardar} deshabilitado={guardando} />
+      <Boton texto="Mensajes de WhatsApp y criterios de control" variante="secundario" onPress={() => router.push('/configuracion-mensajes')} />
     </PantallaFormulario>
   );
 }

@@ -3,11 +3,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Alert, Text, View } from 'react-native';
+import { sumarDias, sumarMeses } from '../../../src/agenda/tiempo';
+import { Pastilla } from '../../../src/ui/agenda';
 import { crearConsulta, ultimaConsultaConPeso } from '../../../src/db/consultas';
 import { obtenerPaciente } from '../../../src/db/pacientes';
 import {
   aISO,
+  aTextoUsuario,
   calcularEdad,
   deDate,
   leerFechaISO,
@@ -70,6 +73,16 @@ function num(texto: string): number | null {
   const v = leerNumero(texto);
   return v === null || Number.isNaN(v) ? null : v;
 }
+
+/** Atajos para la fecha de seguimiento, contados desde el día de la consulta. */
+const SEGUIMIENTOS: [string, (desde: string) => string][] = [
+  ['1 semana', (d) => sumarDias(d, 7)],
+  ['2 semanas', (d) => sumarDias(d, 14)],
+  ['1 mes', (d) => sumarMeses(d, 1)],
+  ['2 meses', (d) => sumarMeses(d, 2)],
+  ['3 meses', (d) => sumarMeses(d, 3)],
+  ['6 meses', (d) => sumarMeses(d, 6)],
+];
 
 export default function NuevaConsulta() {
   // citaId: la consulta se registra desde una cita de la agenda.
@@ -281,7 +294,22 @@ export default function NuevaConsulta() {
           placeholder="DD/MM/AAAA"
           keyboardType="numbers-and-punctuation"
           problema={problemaDe('fechaSeguimiento')}
+          ayuda="Con esta fecha la app le recordará que al paciente le toca control."
         />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {SEGUIMIENTOS.map(([etiqueta, calcular]) => {
+            const fecha = calcular(aISO(fechaConsulta));
+            const textoFecha = aTextoUsuario(leerFechaISO(fecha) ?? fechaConsulta);
+            return (
+              <Pastilla
+                key={etiqueta}
+                texto={etiqueta}
+                activa={t.fechaSeguimiento === textoFecha}
+                onPress={() => cambiarT('fechaSeguimiento')(textoFecha)}
+              />
+            );
+          })}
+        </View>
       </Seccion>
 
       <Boton texto={guardando ? 'Guardando…' : 'Guardar consulta'} onPress={guardar} deshabilitado={guardando} />

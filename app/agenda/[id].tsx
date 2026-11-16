@@ -103,6 +103,13 @@ export default function DetalleCita() {
         ))}
         {sePuedeReprogramar(c.estado) && (
           <Boton
+            texto="Enviar WhatsApp (recordatorio)"
+            variante="secundario"
+            onPress={() => router.push({ pathname: '/whatsapp', params: { citaId: c.id } })}
+          />
+        )}
+        {sePuedeReprogramar(c.estado) && (
+          <Boton
             texto="Reprogramar o editar"
             variante="secundario"
             onPress={() => router.push({ pathname: '/agenda/nueva', params: { citaId: c.id } })}

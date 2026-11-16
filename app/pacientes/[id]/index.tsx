@@ -115,6 +115,11 @@ export default function Expediente() {
         variante="secundario"
         onPress={() => router.push({ pathname: '/pacientes/[id]/crecimiento', params: { id } })}
       />
+      <Boton
+        texto="Enviar WhatsApp"
+        variante="secundario"
+        onPress={() => router.push({ pathname: '/whatsapp', params: { pacienteId: id } })}
+      />
 
       <View style={{ height: espacio.l }} />
 

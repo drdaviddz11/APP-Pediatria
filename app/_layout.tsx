@@ -29,6 +29,9 @@ export default function Raiz() {
           <Stack.Screen name="agenda/[id]" options={{ title: 'Cita' }} />
           <Stack.Screen name="agenda/bloqueo" options={{ title: 'Bloquear horario' }} />
           <Stack.Screen name="configuracion" options={{ title: 'Horario y ajustes' }} />
+          <Stack.Screen name="controles" options={{ title: 'Controles y recordatorios' }} />
+          <Stack.Screen name="whatsapp" options={{ title: 'Mensaje de WhatsApp', presentation: 'modal' }} />
+          <Stack.Screen name="configuracion-mensajes" options={{ title: 'Mensajes y controles' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />

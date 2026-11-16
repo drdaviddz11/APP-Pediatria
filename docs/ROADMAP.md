@@ -27,7 +27,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [ ] Revisión médica de interpretaciones y alertas.
 - [ ] Decidir curvas para prematuros antes de 40 semanas corregidas y uso de referencias CDC.
 
-## Fase 3 — Panel principal y agenda (actual)
+## Fase 3 — Panel principal y agenda
 
 - [x] Panel de inicio: citas de hoy, próxima cita, sala de espera, pendientes de confirmación, canceladas, resumen del día, búsqueda rápida de expedientes y accesos directos.
 - [x] Agenda con vista diaria, semanal y mensual.
@@ -41,11 +41,17 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Próximas citas en el expediente y "Agendar cita de seguimiento" desde la consulta.
 - [ ] Prueba en iPhone por el médico y ajuste del horario real del consultorio.
 
-## Fase 4 — WhatsApp (primera etapa)
+## Fase 4 — WhatsApp (primera etapa) y controles (actual)
 
-- [ ] Botón "Enviar WhatsApp" que abre la conversación con el número autorizado mediante el enlace oficial `wa.me`.
-- [ ] Plantillas de mensajes administrativos editables antes de enviar, sin información clínica.
-- [ ] Solo disponible si el responsable dio su consentimiento.
+- [x] Botón "Enviar WhatsApp" en el expediente y en cada cita, con el enlace oficial `wa.me`.
+- [x] Mensajes predefinidos (recordatorio, propuesta de control, general), editables antes de enviar y desde los ajustes; sin información clínica.
+- [x] Solo a responsables que autorizaron mensajes por WhatsApp.
+- [x] Lista diaria de controles por agendar: seguimiento indicado en la última consulta, control de niño sano según la edad (calendario AAP Bright Futures, editable) y pacientes sin consulta hace tiempo.
+- [x] Apartar automáticamente la cita de control como "por confirmar" en el primer horario libre y preparar el mensaje.
+- [x] Envío uno tras otro: la app abre cada chat con el mensaje listo; registro de mensajes abiertos.
+- [x] Recordatorios de citas por día (mañana por defecto).
+- [x] Atajos de fecha de seguimiento en la consulta (1 y 2 semanas, 1, 2, 3 y 6 meses).
+- [ ] Revisión médica del calendario de niño sano y de los textos de los mensajes.
 
 ## Fase 5 — Servidor, cuentas y seguridad
 
@@ -65,7 +71,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 ## Fase 7 — WhatsApp Business Platform
 
 - [ ] Investigar requisitos de Meta, plantillas aprobadas, consentimiento, tarifas y límites.
-- [ ] Recordatorios y confirmaciones automáticas.
+- [ ] Recordatorios y confirmaciones automáticas (sin tocar Enviar en cada chat).
 - [ ] Flujo de solicitud de citas con verificación de disponibilidad.
 
 ## Fase 8 — Publicación

@@ -183,6 +183,47 @@ export async function cargarPacientesDemo(db: SQLiteDatabase): Promise<void> {
     true,
   );
 
+  // Pacientes sin cita a quienes les toca control (para probar la lista de controles).
+  const mateo = await crearPaciente(
+    db,
+    {
+      ...BASE,
+      numeroExpediente: `${prefijo}-4`,
+      nombres: 'Mateo Prueba',
+      apellidos: 'Ficticio Cuatro',
+      fechaNacimiento: nacimientoHace(6),
+      sexo: 'M',
+      responsableNombre: 'Madre Ficticia Cuatro',
+    },
+    true,
+  );
+  await crearConsulta(db, mateo, consulta(60, {
+    motivo: 'Control de niño sano',
+    pesoKg: 6.4, tallaCm: 63.0, tipoMedicion: 'acostado', perimetroCefalicoCm: 41.0,
+    diagnosticos: 'Lactante sano (ejemplo)',
+  }));
+
+  const valeria = await crearPaciente(
+    db,
+    {
+      ...BASE,
+      numeroExpediente: `${prefijo}-5`,
+      nombres: 'Valeria Prueba',
+      apellidos: 'Ficticia Cinco',
+      fechaNacimiento: nacimientoHace(70),
+      sexo: 'F',
+      responsableNombre: 'Padre Ficticio Cinco',
+      responsableParentesco: 'Padre',
+    },
+    true,
+  );
+  await crearConsulta(db, valeria, consulta(20, {
+    motivo: 'Diarrea aguda',
+    pesoKg: 20.1, tallaCm: 113.0, tipoMedicion: 'de_pie',
+    diagnosticos: 'Gastroenteritis aguda (ejemplo)',
+    fechaSeguimiento: aISO(deDate(haceDias(5))),
+  }));
+
   // Citas de prueba (si no hay horario libre, simplemente no se crean).
   try {
     await agendarDemo(db, ana, 0, 'control', 'confirmada', 'Control de niño sano');

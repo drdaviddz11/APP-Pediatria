@@ -4,7 +4,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 
 > ⚠️ **Versión de desarrollo.** Use solo pacientes ficticios. Los datos se guardan únicamente en el teléfono, todavía sin cifrado ni respaldo. No se debe usar en consulta real hasta completar la revisión de seguridad descrita en [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Qué hace esta versión (fases 1, 2 y 3)
+## Qué hace esta versión (fases 1 a 4)
 
 - Lista de pacientes con búsqueda por nombre, apellidos, número de expediente, responsable o teléfono.
 - Expediente con datos personales, responsable, contacto de emergencia y consentimientos.
@@ -19,6 +19,8 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - **Gráficas de crecimiento** con curvas OMS en puntajes Z o percentiles y las mediciones del paciente.
 - **Panel principal:** citas de hoy, próxima cita, sala de espera, pendientes de confirmación, canceladas, resumen del día y búsqueda rápida de expedientes.
 - **Agenda** diaria, semanal y mensual: horarios libres, reprogramación, estados de la cita, bloqueo de horarios y prevención de citas duplicadas. El horario del consultorio y la duración de las consultas se ajustan en **Horario y ajustes**.
+- **Controles y recordatorios:** lista diaria de pacientes a quienes les toca control (seguimiento indicado, niño sano según la edad o sin consulta hace tiempo). La app les aparta un horario "por confirmar" y prepara el mensaje de WhatsApp; con un toque por paciente se abre cada chat con el mensaje listo. También prepara los recordatorios de las citas del día siguiente.
+- **WhatsApp:** botón en el expediente y en cada cita, con mensajes editables y solo para responsables que lo autorizaron.
 - **Síndrome de Down:** al marcarlo en el expediente, la evaluación y las gráficas usan las curvas del CDC para niños con síndrome de Down (Zemel et al., Pediatrics 2015).
 - Alertas de caída del puntaje Z entre consultas.
 
@@ -105,10 +107,14 @@ npx expo start
     pacientes/         Lista, nuevo, expediente, editar, historia clínica, nueva consulta, gráficas
     agenda/            Agenda (día/semana/mes), nueva cita, detalle de cita, bloquear horario
     configuracion.tsx  Horario de atención y duración de las consultas
+    controles.tsx      Controles por agendar y recordatorios, con envío por WhatsApp
+    whatsapp.tsx       Mensaje individual de WhatsApp
+    configuracion-mensajes.tsx  Textos de los mensajes y criterios de control
     consultas/[id].tsx Detalle de consulta y notas aclaratorias
   src/domain/          Reglas clínicas y de negocio (edad, validaciones). Sin dependencias de la interfaz.
   src/crecimiento/     Evaluación OMS: tablas LMS, puntajes Z, interpretación y curvas
   src/agenda/          Reglas de la agenda: horarios libres, traslapes, estados de las citas
+  src/seguimiento/     A quién le toca control; plantillas y enlaces de WhatsApp
   scripts/             Generadores de las tablas OMS y CDC (síndrome de Down) a partir de las fuentes oficiales
   src/db/              Base de datos local: esquema, migraciones y consultas SQL
   src/ui/              Componentes visuales y colores

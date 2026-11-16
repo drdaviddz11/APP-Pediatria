@@ -199,6 +199,28 @@ const MIGRACIONES: string[] = [
     );
   END;
   `,
+
+  // Versión 5: mensajes de WhatsApp abiertos desde la app y controles descartados
+  // (no se guarda el texto de los mensajes, solo el tipo y la fecha).
+  `
+  CREATE TABLE mensajes_whatsapp (
+    id TEXT PRIMARY KEY NOT NULL,
+    paciente_id TEXT REFERENCES pacientes (id) ON DELETE CASCADE,
+    cita_id TEXT REFERENCES citas (id) ON DELETE SET NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('recordatorio', 'propuesta', 'general')),
+    telefono TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+  );
+  CREATE INDEX idx_mensajes_paciente ON mensajes_whatsapp (paciente_id, creado_en);
+  CREATE INDEX idx_mensajes_cita ON mensajes_whatsapp (cita_id);
+
+  CREATE TABLE controles_descartados (
+    paciente_id TEXT NOT NULL REFERENCES pacientes (id) ON DELETE CASCADE,
+    clave TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    PRIMARY KEY (paciente_id, clave)
+  );
+  `,
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {
