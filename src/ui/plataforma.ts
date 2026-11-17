@@ -26,7 +26,7 @@ const CLAVE_INTENTOS = 'pediacontrol-aislamiento';
 export function estadoDelNavegador(): 'listo' | 'preparar' | string {
   if (!EN_COMPUTADORA) return 'listo';
   if (g.isSecureContext === false)
-    return 'Abra la app con la dirección http://localhost:8081 en esta misma computadora. Por seguridad, el navegador no permite cifrar datos en otras direcciones sin https.';
+    return 'Abra la app con su dirección segura (https://… o http://localhost:8081 en la Mac). Por seguridad, el navegador no permite cifrar datos en direcciones sin https.';
   if (g.crossOriginIsolated !== false) {
     try {
       g.sessionStorage?.removeItem(CLAVE_INTENTOS);
@@ -42,7 +42,7 @@ export function estadoDelNavegador(): 'listo' | 'preparar' | string {
     intentos = 0;
   }
   if (g.navigator?.serviceWorker && intentos < 2) return 'preparar';
-  return 'Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge, con la dirección http://localhost:8081, y recargue la página.';
+  return 'Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge y recargue la página.';
 }
 
 /** Activa el service worker que agrega los encabezados de aislamiento y recarga la página (como máximo dos veces). */
@@ -55,7 +55,9 @@ export async function prepararNavegador(): Promise<void> {
   } catch {
     // Sin almacenamiento de sesión se intenta igual una vez.
   }
-  await sw.register('/aislamiento-sw.js', { scope: '/' });
+  // En GitHub Pages la app vive en una carpeta (/APP-Pediatria); en la Mac, en la raíz.
+  const base = (process.env.EXPO_PUBLIC_BASE_URL ?? '').replace(/\/+$/, '');
+  await sw.register(`${base}/aislamiento-sw.js`, { scope: `${base}/` });
   await sw.ready;
   g.location?.reload();
 }

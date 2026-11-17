@@ -18,7 +18,7 @@ export default function Raiz() {
   useEffect(() => {
     if (navegador !== 'preparar') return;
     prepararNavegador().catch(() =>
-      setNavegador('Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge, con la dirección http://localhost:8081, y recargue la página.'),
+      setNavegador('Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge y recargue la página.'),
     );
   }, [navegador]);
   if (navegador === 'preparar') return <Cargando />;

@@ -99,6 +99,10 @@ Con la Terminal ya mostrando el código QR (paso 4), presione la tecla **w**. Se
 
 **Teléfono y computadora:** cada uno guarda sus datos. Para que se mantengan iguales, active la **Sincronización** en los dos con la misma cuenta ([docs/SINCRONIZACION.md](docs/SINCRONIZACION.md)).
 
+### Versión web publicada (sin Terminal)
+
+La versión de computadora se publica sola en **https://drdaviddz11.github.io/APP-Pediatria/** cada vez que hay cambios (GitHub Pages, gratis para repositorios públicos; ver `.github/workflows/publicar-web.yml`). Se abre en Chrome desde cualquier computadora, sin la Mac encendida. Los datos no se publican: cada navegador guarda los suyos y se comparten cifrados con la sincronización.
+
 ### Para actualizar a la última versión del código
 
 ```bash

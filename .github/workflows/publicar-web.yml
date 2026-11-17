@@ -1,0 +1,55 @@
+# Publica la versión de computadora (web) en GitHub Pages cada vez que hay cambios en main.
+# Dirección: https://drdaviddz11.github.io/APP-Pediatria/
+# Los datos NO se publican: cada navegador guarda los suyos y se sincronizan cifrados con Supabase.
+name: Publicar versión web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar
+        run: npm install --no-audit --no-fund
+      - name: Construir la versión web
+        run: npx expo export -p web
+        env:
+          PEDIACONTROL_BASE_URL: /APP-Pediatria
+          EXPO_PUBLIC_BASE_URL: /APP-Pediatria
+          # Opcionales (Settings → Secrets and variables → Actions → Variables): así la pantalla
+          # de Sincronización ya trae la dirección y la clave pública del servidor.
+          EXPO_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_KEY: ${{ vars.SUPABASE_KEY }}
+      - name: Preparar para GitHub Pages
+        # 404.html = la misma app, para que funcionen las direcciones internas (por ejemplo /pacientes) al recargar.
+        run: cp dist/index.html dist/404.html && touch dist/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publicar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicacion.outputs.page_url }}
+    steps:
+      - id: publicacion
+        uses: actions/deploy-pages@v4
