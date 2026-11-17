@@ -1,20 +1,28 @@
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { migrarBaseDeDatos } from '../src/db/esquema';
 import { SincronizacionAutomatica } from '../src/sincronizacion/automatica';
 import { Cargando } from '../src/ui/componentes';
 import { AnfitrionDialogos } from '../src/ui/dialogo';
-import { pedirAlmacenamientoPersistente, problemaDelNavegador } from '../src/ui/plataforma';
+import { estadoDelNavegador, pedirAlmacenamientoPersistente, prepararNavegador } from '../src/ui/plataforma';
 import { colores, espacio, texto } from '../src/ui/tema';
 
 export default function Raiz() {
   useEffect(pedirAlmacenamientoPersistente, []);
 
-  // En la computadora: si el navegador no puede guardar la base de datos, se explica qué hacer.
-  const problema = problemaDelNavegador();
+  // En la computadora: la primera vez se prepara el navegador (se recarga solo); si no se puede, se explica qué hacer.
+  const [navegador, setNavegador] = useState(estadoDelNavegador);
+  useEffect(() => {
+    if (navegador !== 'preparar') return;
+    prepararNavegador().catch(() =>
+      setNavegador('Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge, con la dirección http://localhost:8081, y recargue la página.'),
+    );
+  }, [navegador]);
+  if (navegador === 'preparar') return <Cargando />;
+  const problema = navegador === 'listo' ? null : navegador;
   if (problema) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: espacio.xl, backgroundColor: colores.fondo }}>

@@ -7,18 +7,57 @@ export const EN_COMPUTADORA = Platform.OS === 'web';
 /** Cómo llamar al equipo donde se guardan los datos, para los textos de la app. */
 export const ESTE_EQUIPO = EN_COMPUTADORA ? 'Esta computadora' : 'Este teléfono';
 
+type Global = {
+  crossOriginIsolated?: boolean;
+  isSecureContext?: boolean;
+  navigator?: { serviceWorker?: { register(url: string, o?: { scope: string }): Promise<unknown>; ready: Promise<unknown> } };
+  sessionStorage?: { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void };
+  location?: { reload(): void };
+};
+const g = globalThis as Global;
+const CLAVE_INTENTOS = 'pediacontrol-aislamiento';
+
 /**
- * En la computadora la base de datos necesita que el navegador permita el "aislamiento de origen"
- * (Chrome y Edge lo permiten con la configuración de metro.config.js). Devuelve un mensaje si no se puede usar.
+ * En la computadora, la base de datos necesita que la página esté "aislada" (cross-origin isolated).
+ * - 'listo': se puede usar.
+ * - 'preparar': falta activar el service worker (public/aislamiento-sw.js) y recargar; ver prepararNavegador().
+ * - un texto: no se puede usar en este navegador (el mensaje explica qué hacer).
  */
-export function problemaDelNavegador(): string | null {
-  if (!EN_COMPUTADORA) return null;
-  const g = globalThis as { crossOriginIsolated?: boolean; isSecureContext?: boolean };
+export function estadoDelNavegador(): 'listo' | 'preparar' | string {
+  if (!EN_COMPUTADORA) return 'listo';
   if (g.isSecureContext === false)
     return 'Abra la app con la dirección http://localhost:8081 en esta misma computadora. Por seguridad, el navegador no permite cifrar datos en otras direcciones sin https.';
-  if (g.crossOriginIsolated === false)
-    return 'Este navegador no puede guardar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge, con la dirección http://localhost:8081.';
-  return null;
+  if (g.crossOriginIsolated !== false) {
+    try {
+      g.sessionStorage?.removeItem(CLAVE_INTENTOS);
+    } catch {
+      // Sin acceso al almacenamiento de la sesión: no importa.
+    }
+    return 'listo';
+  }
+  let intentos = 0;
+  try {
+    intentos = Number(g.sessionStorage?.getItem(CLAVE_INTENTOS) ?? 0);
+  } catch {
+    intentos = 0;
+  }
+  if (g.navigator?.serviceWorker && intentos < 2) return 'preparar';
+  return 'Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge, con la dirección http://localhost:8081, y recargue la página.';
+}
+
+/** Activa el service worker que agrega los encabezados de aislamiento y recarga la página (como máximo dos veces). */
+export async function prepararNavegador(): Promise<void> {
+  const sw = g.navigator?.serviceWorker;
+  if (!sw) return;
+  try {
+    const intentos = Number(g.sessionStorage?.getItem(CLAVE_INTENTOS) ?? 0);
+    g.sessionStorage?.setItem(CLAVE_INTENTOS, String(intentos + 1));
+  } catch {
+    // Sin almacenamiento de sesión se intenta igual una vez.
+  }
+  await sw.register('/aislamiento-sw.js', { scope: '/' });
+  await sw.ready;
+  g.location?.reload();
 }
 
 /**
