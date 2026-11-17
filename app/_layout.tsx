@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Suspense, useEffect } from 'react';
 import { Text, View } from 'react-native';
 import { migrarBaseDeDatos } from '../src/db/esquema';
+import { SincronizacionAutomatica } from '../src/sincronizacion/automatica';
 import { Cargando } from '../src/ui/componentes';
 import { AnfitrionDialogos } from '../src/ui/dialogo';
 import { pedirAlmacenamientoPersistente, problemaDelNavegador } from '../src/ui/plataforma';
@@ -49,6 +50,7 @@ export default function Raiz() {
           <Stack.Screen name="whatsapp" options={{ title: 'Mensaje de WhatsApp', presentation: 'modal' }} />
           <Stack.Screen name="configuracion-mensajes" options={{ title: 'Mensajes y controles' }} />
           <Stack.Screen name="respaldo" options={{ title: 'Respaldo' }} />
+          <Stack.Screen name="sincronizacion" options={{ title: 'Sincronización' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />
@@ -57,6 +59,7 @@ export default function Raiz() {
           <Stack.Screen name="pacientes/[id]/crecimiento" options={{ title: 'Gráficas de crecimiento' }} />
           <Stack.Screen name="consultas/[id]" options={{ title: 'Consulta' }} />
         </Stack>
+        <SincronizacionAutomatica />
         <AnfitrionDialogos />
       </SQLiteProvider>
     </Suspense>

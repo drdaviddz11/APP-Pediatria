@@ -66,6 +66,14 @@ export async function restaurarDatos(db: SQLiteDatabase, contenido: ContenidoRes
     throw new Error('Este respaldo viene de una versión más nueva de la app. Actualice la app antes de restaurarlo.');
   }
   const existentes = await tablasExistentes(db);
+  if (existentes.has('sync_control')) {
+    const c = await db.getFirstAsync<{ activo: number }>('SELECT activo FROM sync_control WHERE id = 1');
+    if (c?.activo === 1) {
+      throw new Error(
+        'La sincronización está activa en este equipo. Para restaurar un respaldo, primero desactívela en Sincronización (los datos de los demás equipos no se tocan).',
+      );
+    }
+  }
 
   try {
     await cargar(db, contenido, existentes);
@@ -109,6 +117,11 @@ async function cargar(db: SQLiteDatabase, contenido: ContenidoRespaldo, existent
     }
 
     for (const c of candados) await db.execAsync(c.sql);
+    // Respaldos de versiones anteriores no traen el identificador común de la bitácora.
+    const colsBitacora = await db.getAllAsync<{ name: string }>('PRAGMA table_info(bitacora)');
+    if (colsBitacora.some((c) => c.name === 'uid')) {
+      await db.runAsync('UPDATE bitacora SET uid = lower(hex(randomblob(16))) WHERE uid IS NULL');
+    }
 
     // Verificaciones de integridad antes de confirmar.
     const huerfanos = await db.getAllAsync('PRAGMA foreign_key_check');

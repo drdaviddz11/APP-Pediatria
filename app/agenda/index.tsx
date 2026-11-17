@@ -1,7 +1,8 @@
 // Agenda: vista diaria, semanal y mensual.
 
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Alert } from '../../src/ui/dialogo';
@@ -52,7 +53,7 @@ export default function Agenda() {
   const [version, setVersion] = useState(0);
   const hoy = hoyISO();
 
-  useFocusEffect(
+  useFocusEffectConSync(
     useCallback(() => {
       let activo = true;
       void (async () => {

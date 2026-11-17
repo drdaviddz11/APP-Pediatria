@@ -60,14 +60,15 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Ventanas de confirmación propias en la computadora (las del sistema no existen en el navegador).
 - [x] Respaldo: descarga del archivo y carga desde la computadora; compatible con los respaldos del teléfono.
 - [x] WhatsApp Web en una sola pestaña.
-- [ ] Sincronización automática entre teléfono y computadora (requiere la fase 5).
+- [x] Sincronización automática entre teléfono y computadora (ver fase 5).
 - [ ] Publicarla como página web con https o como app instalable (después de la revisión de seguridad).
 
 ## Fase 5 — Servidor, cuentas y seguridad
 
-- [ ] Sincronizar los datos entre teléfono y computadora.
-- [ ] Elegir y configurar Supabase (PostgreSQL) u otra alternativa, con costos explicados antes de contratar.
-- [ ] Inicio de sesión seguro, roles (médico, asistente) y separación estricta por consultorio (Row Level Security).
+- [x] Sincronizar los datos entre teléfono y computadora: Supabase plan gratuito, cifrado de extremo a extremo, funciona sin internet, último cambio gana, avisos de expediente repetido y citas encimadas, limpieza diaria de versiones viejas.
+- [x] Elegir Supabase (PostgreSQL), plan gratuito ($0); costos del plan Pro (desde US$25/mes) explicados en docs/SINCRONIZACION.md.
+- [x] Inicio de sesión (la contraseña nunca llega al servidor) y separación estricta por cuenta (Row Level Security).
+- [ ] Roles (médico, asistente) y consultorios con varias personas.
 - [x] Respaldo manual cifrado con contraseña (PBKDF2-SHA256 310 000 iteraciones + AES-256-GCM), guardado en iCloud Drive, Google Drive o la computadora, y restauración completa con verificación. Adelantado a petición del médico.
 - [ ] Respaldo automático en el servidor.
 - [ ] Cifrado en tránsito y en reposo, bitácora de accesos.

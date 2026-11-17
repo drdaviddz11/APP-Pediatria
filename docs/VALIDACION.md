@@ -62,6 +62,31 @@ Las tablas de síndrome de Down se extraen del PDF con `scripts/generar_tablas_d
 | Respaldo de una versión más nueva de la app | Se rechaza con aviso |
 | Respaldo de una versión anterior | Se restaura; las columnas nuevas toman su valor por defecto |
 
+## Sincronización
+
+Probada con dos, tres y cuatro equipos simulados (SQLite real) y un servidor Supabase simulado (inicio de sesión y API REST con seguridad por usuario); el SQL del servidor (`docs/supabase.sql`) se probó en PostgreSQL 16 real con los roles y la función `auth.uid()` de Supabase.
+
+| Prueba | Resultado |
+|---|---|
+| Primer equipo envía todo; equipo vacío recibe todo | Bases idénticas en todas las tablas sincronizadas |
+| Lo recibido no se vuelve a enviar; sincronizar de nuevo no cambia nada | Correcto |
+| Edición en un equipo, consulta y nota nuevas en otro | Llegan al otro equipo |
+| Mismo expediente editado en dos equipos | Gana el cambio más reciente en los dos |
+| Sin conexión | Los cambios esperan y se envían al volver |
+| Mismo número de expediente creado en dos equipos | Uno conserva el número, el otro recibe "-2" en ambos equipos; aviso |
+| Misma hora agendada en dos equipos | Se conservan las dos citas y se avisa; en un mismo equipo el candado sigue activo |
+| Ajustes, bloqueos creados y quitados, borrado de pacientes de demostración (con sus consultas) | Se reflejan en el otro equipo; la fecha de respaldo es de cada equipo |
+| Consulta que llega antes que su expediente | Espera y se aplica en cuanto llega |
+| Registro confirmado fuera de orden por el servidor | No se pierde |
+| Sesión vencida | Se renueva sola |
+| Registro alterado en el servidor | Se ignora con aviso |
+| Lo que ve el servidor | Ningún nombre, dirección, número de expediente ni nombre de tabla |
+| Otra cuenta | No ve ni puede borrar, modificar ni suplantar registros ajenos (PostgreSQL real); sin sesión no hay acceso |
+| Limpieza de versiones viejas | Queda la versión más reciente aunque una más vieja haya llegado después; un equipo nuevo recibe exactamente lo mismo |
+| Combinar un equipo con datos propios | Todos los equipos quedan iguales |
+| Actualización de una base existente (versión 5 → 6) | No se pierde nada; la sincronización empieza desactivada |
+| 300 expedientes con consulta | Enviados y recibidos en menos de 1 segundo cada uno (en computadora) |
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

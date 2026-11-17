@@ -1,7 +1,8 @@
 // Panel principal: el día de hoy de un vistazo y accesos rápidos.
 
-import { Href, router, Stack, useFocusEffect } from 'expo-router';
+import { Href, router, Stack } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useFocusEffectConSync } from '../src/sincronizacion/eventos';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ahoraMomento, fechaDeMomento, hoyISO, sumarDias, textoFechaLarga } from '../src/agenda/tiempo';
@@ -14,7 +15,7 @@ import { edadDesdeISO } from '../src/domain/fechas';
 import { FilaCita } from '../src/ui/agenda';
 import { Aviso, PantallaSimple, Seccion, estilos } from '../src/ui/componentes';
 import { colores, espacio, radio, texto } from '../src/ui/tema';
-import { ESTE_EQUIPO } from '../src/ui/plataforma';
+import { IndicadorSync } from '../src/sincronizacion/IndicadorSync';
 
 interface Datos {
   hoy: Cita[];
@@ -36,6 +37,7 @@ const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
   { texto: 'Registrar consulta', icono: '🩺', ruta: { pathname: '/pacientes', params: { seleccionar: 'consulta' } } },
   { texto: 'Horario y ajustes', icono: '⚙️', ruta: '/configuracion' },
   { texto: 'Respaldo', icono: '💾', ruta: '/respaldo' },
+  { texto: 'Sincronización', icono: '☁️', ruta: '/sincronizacion' },
   { texto: 'Controles y WhatsApp', icono: '💬', ruta: '/controles' },
 ];
 
@@ -46,7 +48,7 @@ export default function Panel() {
   const [encontrados, setEncontrados] = useState<ResumenPaciente[]>([]);
   const hoy = hoyISO();
 
-  useFocusEffect(
+  useFocusEffectConSync(
     useCallback(() => {
       let activo = true;
       void (async () => {
@@ -105,7 +107,9 @@ export default function Panel() {
       <Stack.Screen options={{ title: 'PediaControl Pro' }} />
       <Text style={s.fecha}>Hoy, {textoFechaLarga(hoy, false)}</Text>
 
-      <Aviso>Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en {ESTE_EQUIPO.toLowerCase()}.</Aviso>
+      <Aviso>Versión de desarrollo: use solo pacientes ficticios.</Aviso>
+
+      <IndicadorSync />
 
       {datos?.hayPacientes && (datos.diasRespaldo === null || datos.diasRespaldo > 7) && (
         <Pressable onPress={() => router.push('/respaldo')} style={({ pressed }) => [s.avisoRespaldo, pressed && { opacity: 0.8 }]}>

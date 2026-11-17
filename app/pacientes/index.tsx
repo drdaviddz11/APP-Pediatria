@@ -1,8 +1,9 @@
 // Lista y búsqueda de pacientes.
 // Con ?seleccionar=consulta sirve para elegir a quién registrarle una consulta.
 
-import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Alert } from '../../src/ui/dialogo';
@@ -11,7 +12,6 @@ import { cargarPacientesDemo } from '../../src/db/demo';
 import { edadDesdeISO, textoFechaHora } from '../../src/domain/fechas';
 import { Aviso, Boton, EnlaceTexto, estilos } from '../../src/ui/componentes';
 import { ANCHO_MAXIMO, colores, espacio, radio, texto } from '../../src/ui/tema';
-import { ESTE_EQUIPO } from '../../src/ui/plataforma';
 
 export default function Pacientes() {
   const { seleccionar } = useLocalSearchParams<{ seleccionar?: string }>();
@@ -30,7 +30,7 @@ export default function Pacientes() {
   );
 
   // Recargar cada vez que se vuelve a esta pantalla (por ejemplo, después de crear un paciente).
-  useFocusEffect(
+  useFocusEffectConSync(
     useCallback(() => {
       void cargar(busqueda);
     }, [cargar, busqueda]),
@@ -87,8 +87,7 @@ export default function Pacientes() {
             <Text style={[estilos.suave, { marginBottom: espacio.m }]}>Toque el paciente al que le registrará la consulta.</Text>
           ) : (
           <Aviso>
-            Versión de desarrollo: use solo pacientes ficticios. Los datos se guardan únicamente en {ESTE_EQUIPO.toLowerCase()}; haga
-            respaldos con frecuencia.
+            Versión de desarrollo: use solo pacientes ficticios. Haga respaldos con frecuencia.
           </Aviso>
           )
         }

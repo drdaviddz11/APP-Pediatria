@@ -148,6 +148,7 @@ export default function Configuracion() {
       <Boton texto={guardando ? 'Guardando…' : 'Guardar horario'} onPress={guardar} deshabilitado={guardando} />
       <Boton texto="Mensajes de WhatsApp y criterios de control" variante="secundario" onPress={() => router.push('/configuracion-mensajes')} />
       <Boton texto="Respaldo de los datos" variante="secundario" onPress={() => router.push('/respaldo')} />
+      <Boton texto="Sincronización entre equipos" variante="secundario" onPress={() => router.push('/sincronizacion')} />
     </PantallaFormulario>
   );
 }

@@ -2,8 +2,9 @@
 // Cada versión nueva se agrega al final de MIGRACIONES; nunca se modifican las anteriores.
 
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { sqlTriggersCaptura, TABLAS_SYNC } from '../sincronizacion/tablas';
 
-const MIGRACIONES: string[] = [
+export const MIGRACIONES: string[] = [
   // Versión 1: expedientes, historia clínica, consultas, notas y bitácora
   `
   CREATE TABLE pacientes (
@@ -221,6 +222,109 @@ const MIGRACIONES: string[] = [
     PRIMARY KEY (paciente_id, clave)
   );
   `,
+
+  // Versión 6: sincronización entre equipos (teléfono y computadora).
+  // Tablas solo de este equipo (no se respaldan ni se envían) y triggers que anotan cada cambio.
+  `
+  CREATE TABLE sync_control (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    activo INTEGER NOT NULL DEFAULT 0,
+    aplicando INTEGER NOT NULL DEFAULT 0
+  );
+  INSERT INTO sync_control (id) VALUES (1);
+
+  -- Filas cambiadas en este equipo que falta enviar (una sola anotación por fila).
+  CREATE TABLE sync_pendientes (
+    tabla TEXT NOT NULL,
+    clave TEXT NOT NULL,
+    momento TEXT NOT NULL,
+    PRIMARY KEY (tabla, clave)
+  );
+  -- Versión más reciente conocida de cada fila (para que gane el último cambio).
+  CREATE TABLE sync_versiones (
+    tabla TEXT NOT NULL,
+    clave TEXT NOT NULL,
+    momento TEXT NOT NULL,
+    dispositivo TEXT NOT NULL,
+    PRIMARY KEY (tabla, clave)
+  );
+  CREATE TABLE sync_estado (
+    clave TEXT PRIMARY KEY NOT NULL,
+    valor TEXT NOT NULL
+  );
+  -- Cambios recibidos que todavía no se pudieron aplicar (por ejemplo, llegó una consulta antes que su expediente).
+  CREATE TABLE sync_por_aplicar (
+    seq INTEGER PRIMARY KEY NOT NULL,
+    carga TEXT NOT NULL,
+    error TEXT NOT NULL,
+    intentos INTEGER NOT NULL DEFAULT 1
+  );
+  -- Avisos para el médico (expediente repetido, citas encimadas desde dos equipos...).
+  CREATE TABLE sync_avisos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    momento TEXT NOT NULL,
+    mensaje TEXT NOT NULL
+  );
+
+  -- La bitácora necesita un identificador común a todos los equipos.
+  ALTER TABLE bitacora ADD COLUMN uid TEXT;
+  UPDATE bitacora SET uid = lower(hex(randomblob(16))) WHERE uid IS NULL;
+  CREATE UNIQUE INDEX idx_bitacora_uid ON bitacora (uid);
+  CREATE TRIGGER bitacora_uid AFTER INSERT ON bitacora WHEN NEW.uid IS NULL
+  BEGIN
+    UPDATE bitacora SET uid = lower(hex(randomblob(16))) WHERE id = NEW.id;
+  END;
+
+  -- Los candados de la agenda siguen igual para lo que se hace en este equipo, pero no rechazan una cita que
+  -- ya se guardó en otro equipo (si se encima, la app lo avisa para reprogramar una de las dos).
+  DROP TRIGGER citas_sin_traslape_al_crear;
+  DROP TRIGGER citas_sin_traslape_al_cambiar;
+  DROP TRIGGER citas_sin_bloqueo_al_mover;
+  DROP TRIGGER bloqueos_sin_citas;
+
+  CREATE TRIGGER citas_sin_traslape_al_crear BEFORE INSERT ON citas
+  WHEN NEW.estado NOT IN ('cancelada', 'no_asistio') AND (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+  BEGIN
+    SELECT RAISE(ABORT, 'TRASLAPE: ya existe una cita en ese horario.')
+    WHERE EXISTS (
+      SELECT 1 FROM citas c
+      WHERE c.estado NOT IN ('cancelada', 'no_asistio') AND c.inicio < NEW.fin AND c.fin > NEW.inicio
+    );
+    SELECT RAISE(ABORT, 'BLOQUEO: ese horario está bloqueado.')
+    WHERE EXISTS (SELECT 1 FROM bloqueos b WHERE b.inicio < NEW.fin AND b.fin > NEW.inicio);
+  END;
+
+  CREATE TRIGGER citas_sin_traslape_al_cambiar BEFORE UPDATE ON citas
+  WHEN NEW.estado NOT IN ('cancelada', 'no_asistio') AND (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+  BEGIN
+    SELECT RAISE(ABORT, 'TRASLAPE: ya existe una cita en ese horario.')
+    WHERE EXISTS (
+      SELECT 1 FROM citas c
+      WHERE c.id != NEW.id AND c.estado NOT IN ('cancelada', 'no_asistio') AND c.inicio < NEW.fin AND c.fin > NEW.inicio
+    );
+  END;
+
+  CREATE TRIGGER citas_sin_bloqueo_al_mover BEFORE UPDATE ON citas
+  WHEN NEW.estado NOT IN ('cancelada', 'no_asistio')
+    AND (NEW.inicio != OLD.inicio OR NEW.fin != OLD.fin OR OLD.estado IN ('cancelada', 'no_asistio'))
+    AND (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+  BEGIN
+    SELECT RAISE(ABORT, 'BLOQUEO: ese horario está bloqueado.')
+    WHERE EXISTS (SELECT 1 FROM bloqueos b WHERE b.inicio < NEW.fin AND b.fin > NEW.inicio);
+  END;
+
+  CREATE TRIGGER bloqueos_sin_citas BEFORE INSERT ON bloqueos
+  WHEN (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+  BEGIN
+    SELECT RAISE(ABORT, 'TRASLAPE: hay citas activas en ese horario.')
+    WHERE EXISTS (
+      SELECT 1 FROM citas c
+      WHERE c.estado NOT IN ('cancelada', 'no_asistio') AND c.inicio < NEW.fin AND c.fin > NEW.inicio
+    );
+  END;
+  ` +
+    // Las 10 tablas de la versión 6 (lista fija: las tablas futuras tendrán sus triggers en otra migración).
+    sqlTriggersCaptura(TABLAS_SYNC.slice(0, 10)),
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

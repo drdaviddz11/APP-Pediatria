@@ -1,7 +1,8 @@
 // Expediente del paciente: datos, historia clínica y consultas en orden cronológico.
 
-import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useFocusEffectConSync } from '../../../src/sincronizacion/eventos';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ahoraMomento } from '../../../src/agenda/tiempo';
@@ -32,7 +33,7 @@ export default function Expediente() {
   const [citas, setCitas] = useState<Cita[]>([]);
   const [noExiste, setNoExiste] = useState(false);
 
-  useFocusEffect(
+  useFocusEffectConSync(
     useCallback(() => {
       let activo = true;
       void (async () => {

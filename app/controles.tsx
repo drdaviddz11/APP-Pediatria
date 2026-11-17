@@ -1,7 +1,8 @@
 // Lista diaria: controles por agendar y recordatorios de citas, con envío de WhatsApp uno tras otro.
 
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useFocusEffectConSync } from '../src/sincronizacion/eventos';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Alert } from '../src/ui/dialogo';
@@ -63,7 +64,7 @@ export default function Controles() {
   const [trabajando, setTrabajando] = useState(false);
   const [version, setVersion] = useState(0);
 
-  useFocusEffect(
+  useFocusEffectConSync(
     useCallback(() => {
       if (cola) return; // no recargar mientras se envían mensajes
       let activo = true;
