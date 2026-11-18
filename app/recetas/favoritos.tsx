@@ -8,8 +8,15 @@ import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 import { Boton, Campo, EnlaceTexto, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
 import { Alert } from '../../src/ui/dialogo';
 import { colores, espacio } from '../../src/ui/tema';
+import { usePlan } from '../../src/plan/PlanProvider';
+import { PantallaSoloPro } from '../../src/ui/pro';
 
-export default function Favoritos() {
+export default function Pantalla() {
+  const { esPro } = usePlan();
+  return esPro ? <Favoritos /> : <PantallaSoloPro funcion="receta" />;
+}
+
+function Favoritos() {
   const db = useSQLiteContext();
   const [lista, setLista] = useState<Favorito[]>([]);
   const [nuevo, setNuevo] = useState('');

@@ -13,8 +13,11 @@ import { imprimirHtml } from '../../src/receta/imprimir';
 import { Boton, Cargando, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
 import { Alert } from '../../src/ui/dialogo';
 import { espacio } from '../../src/ui/tema';
+import { usePlan } from '../../src/plan/PlanProvider';
+import { AvisoPro } from '../../src/ui/pro';
 
 export default function VerReceta() {
+  const { esPro } = usePlan();
   const db = useSQLiteContext();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [datos, setDatos] = useState<{ receta: Receta; paciente: Paciente } | null>(null);
@@ -64,14 +67,15 @@ export default function VerReceta() {
           </View>
         ))}
       </Seccion>
-      <Boton texto="Imprimir" onPress={() => void imprimir()} />
-      <Boton
+      {!esPro && <AvisoPro funcion="receta" compacto />}
+      {esPro && <Boton texto="Imprimir" onPress={() => void imprimir()} />}
+      {esPro && <Boton
         texto="Hacer otra receta con estas indicaciones"
         variante="secundario"
         onPress={() =>
           router.push({ pathname: '/recetas/nueva', params: { pacienteId: receta.pacienteId, base: receta.id } })
         }
-      />
+      />}
       <Text style={[estilos.suave, { marginTop: espacio.s }]}>Una receta emitida no se modifica. Para corregirla, haga una nueva.</Text>
     </PantallaFormulario>
   );

@@ -16,8 +16,15 @@ import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 import { Aviso, Boton, Campo, Cargando, EnlaceTexto, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
 import { Alert } from '../../src/ui/dialogo';
 import { colores, espacio, radio, texto } from '../../src/ui/tema';
+import { usePlan } from '../../src/plan/PlanProvider';
+import { PantallaSoloPro } from '../../src/ui/pro';
 
-export default function NuevaReceta() {
+export default function Pantalla() {
+  const { esPro } = usePlan();
+  return esPro ? <NuevaReceta /> : <PantallaSoloPro funcion="receta" />;
+}
+
+function NuevaReceta() {
   const db = useSQLiteContext();
   // base: id de otra receta cuyas indicaciones se copian (para repetirla o corregirla).
   const { pacienteId, consultaId, base } = useLocalSearchParams<{ pacienteId: string; consultaId?: string; base?: string }>();

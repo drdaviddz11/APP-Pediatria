@@ -25,6 +25,8 @@ import { BotonFlecha, ChipEstado } from '../src/ui/agenda';
 import { Aviso, Boton, Cargando, EnlaceTexto, PantallaSimple, Seccion, Selector, estilos } from '../src/ui/componentes';
 import { colores, espacio, radio, texto } from '../src/ui/tema';
 import { Casilla, EnvioEnLote, MensajeEnCola } from '../src/ui/whatsapp';
+import { usePlan } from '../src/plan/PlanProvider';
+import { irAPlanes } from '../src/ui/pro';
 
 type Pestana = 'controles' | 'recordatorios';
 
@@ -50,6 +52,7 @@ function impedimentoCita(c: Cita, cfg: ConfigMensajes): string | null {
 }
 
 export default function Controles() {
+  const { esPro } = usePlan();
   const params = useLocalSearchParams<{ pestana?: Pestana }>();
   const db = useSQLiteContext();
   const hoy = hoyISO();
@@ -118,6 +121,7 @@ export default function Controles() {
 
   // --- Controles: apartar citas y preparar mensajes ---
   function prepararControles() {
+    if (!esPro) return irAPlanes('whatsapp');
     const elegidos = controles.filter((c) => marcados.has(c.pacienteId) && !impedimentoControl(c, config));
     if (elegidos.length === 0) return;
     Alert.alert(
@@ -192,6 +196,7 @@ export default function Controles() {
 
   // --- Recordatorios de citas ---
   function prepararRecordatorios() {
+    if (!esPro) return irAPlanes('whatsapp');
     const horaActual = new Date().getHours();
     const mensajes: MensajeEnCola[] = citas
       .filter((c) => marcados.has(c.id) && !impedimentoCita(c, config))
@@ -214,7 +219,7 @@ export default function Controles() {
     if (mensajes.length > 0) setCola(mensajes);
   }
 
-  if (cola) {
+  if (cola && esPro) {
     return (
       <PantallaSimple>
         <EnvioEnLote mensajes={cola} alAbrir={registrarApertura} alTerminar={terminar} />
@@ -297,7 +302,7 @@ export default function Controles() {
           ) : (
             <>
               <Boton
-                texto={trabajando ? 'Apartando citas…' : `Apartar citas y preparar mensajes (${marcadosControl})`}
+                texto={trabajando ? 'Apartando citas…' : `Apartar citas y preparar mensajes (${marcadosControl})${esPro ? '' : ' 🔒 Pro'}`}
                 onPress={prepararControles}
                 deshabilitado={trabajando || marcadosControl === 0}
               />
@@ -327,7 +332,7 @@ export default function Controles() {
           ) : (
             <>
               <Boton
-                texto={`Preparar recordatorios (${marcadosCita})`}
+                texto={`Preparar recordatorios (${marcadosCita})${esPro ? '' : ' 🔒 Pro'}`}
                 onPress={prepararRecordatorios}
                 deshabilitado={marcadosCita === 0}
               />

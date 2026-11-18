@@ -32,6 +32,8 @@ jobs:
         env:
           PEDIACONTROL_BASE_URL: /APP-Pediatria
           EXPO_PUBLIC_BASE_URL: /APP-Pediatria
+          # Edición del Dr. Díaz: funciones Pro activas en su página (la versión de la tienda usará la suscripción).
+          EXPO_PUBLIC_EDICION: desarrollador
           # Opcionales (Settings → Secrets and variables → Actions → Variables): así la pantalla
           # de Sincronización ya trae la dirección y la clave pública del servidor.
           EXPO_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}

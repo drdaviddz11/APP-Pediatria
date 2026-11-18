@@ -120,6 +120,15 @@ Probada con dos, tres y cuatro equipos simulados (SQLite real) y un servidor Sup
 | Impresión desde la computadora (marco oculto + cuadro de impresión) | Correcta en Chromium |
 | Impresión desde el iPhone (AirPrint) | Pendiente de probar en el teléfono |
 
+## Versión Gratis y Pro
+
+| Prueba | Resultado |
+|---|---|
+| Edición según compilación: sin variable → gratis; `EXPO_PUBLIC_EDICION=desarrollador` o modo de pruebas → Pro | Correcto |
+| "Ver como versión gratis" quita Pro solo en la edición del desarrollador; la versión gratis no puede activarlo | Correcto |
+| Recetas guardadas visibles en la versión gratis; hacer, imprimir, copiar y favoritos piden Pro | Revisado en el código |
+| WhatsApp (expediente, cita, controles y recordatorios) pide Pro; la lista de controles sigue visible | Revisado en el código |
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

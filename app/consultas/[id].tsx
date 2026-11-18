@@ -16,12 +16,15 @@ import { textoDinero, textoFormaPago } from '../../src/caja/dinero';
 import { Cobro, cobroDeConsulta, leerAjustesCaja } from '../../src/db/caja';
 import { Receta, recetasDeConsulta } from '../../src/db/recetas';
 import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
+import { usePlan } from '../../src/plan/PlanProvider';
+import { AvisoPro } from '../../src/ui/pro';
 
 function conUnidad(v: number | null, unidad: string): string | null {
   return v == null ? null : `${v} ${unidad}`;
 }
 
 export default function VerConsulta() {
+  const { esPro } = usePlan();
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
   const [consulta, setConsulta] = useState<Consulta | null>(null);
@@ -158,10 +161,11 @@ export default function VerConsulta() {
             ℞ {r.indicaciones.map((t) => t.split('\n')[0]).join(' · ')} ›
           </Text>
         ))}
-        <Boton
+        {!esPro && <AvisoPro funcion="receta" compacto />}
+        {esPro && <Boton
           texto={recetas.length ? 'Hacer otra receta' : 'Hacer receta'}
           onPress={() => router.push({ pathname: '/recetas/nueva', params: { pacienteId: consulta.pacienteId, consultaId: consulta.id } })}
-        />
+        />}
       </Seccion>
 
       {cobro && (

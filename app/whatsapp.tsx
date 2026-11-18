@@ -21,8 +21,15 @@ import {
 } from '../src/seguimiento/mensajes';
 import { Aviso, Boton, Campo, Cargando, Dato, PantallaFormulario, Seccion, Selector, estilos } from '../src/ui/componentes';
 import { abrirWhatsApp } from '../src/ui/whatsapp';
+import { usePlan } from '../src/plan/PlanProvider';
+import { PantallaSoloPro } from '../src/ui/pro';
 
-export default function MensajeWhatsApp() {
+export default function Pantalla() {
+  const { esPro } = usePlan();
+  return esPro ? <MensajeWhatsApp /> : <PantallaSoloPro funcion="whatsapp" />;
+}
+
+function MensajeWhatsApp() {
   const params = useLocalSearchParams<{ pacienteId?: string; citaId?: string }>();
   const db = useSQLiteContext();
   const [cfg, setCfg] = useState<ConfigMensajes | null>(null);

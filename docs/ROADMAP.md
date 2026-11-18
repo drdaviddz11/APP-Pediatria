@@ -108,8 +108,15 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [ ] Recordatorios y confirmaciones automáticas (sin tocar Enviar en cada chat).
 - [ ] Flujo de solicitud de citas con verificación de disponibilidad.
 
-## Fase 8 — Publicación
+## Fase 8 — Publicación y venta
 
-- [ ] Cuenta de Apple Developer, compilación propia (EAS Build) y TestFlight.
-- [ ] Versión Android y versión web.
-- [ ] Modelo de negocio SaaS para otros profesionales.
+Decisiones del médico (18 nov 2026): versión Gratis y Pro (Pro = recetas y WhatsApp), cobro por suscripción mensual/anual;
+la cuenta de Google se conecta solo para respaldos (la app abre sin cuenta, así no se exige "Entrar con Apple").
+
+- [x] División Gratis / Pro en la app (edición del desarrollador siempre Pro; interruptor para probar la versión gratis).
+- [ ] Respaldo automático en el Google Drive del usuario (permiso limitado a los archivos de la app; cifrado antes de subir). Proyecto de Google Cloud gratuito.
+- [ ] Empresa o entidad legal para publicar (Apple pide que las apps de salud las publique una entidad, no una persona) y número D-U-N-S.
+- [ ] Cuenta de Apple Developer ($99 al año), compilación propia (EAS Build) y TestFlight; inscripción en el programa de pequeños desarrolladores (comisión 15 %).
+- [ ] Suscripción dentro de la app (App Store / Google Play, $25 una vez) y verificación de la compra.
+- [ ] Aviso de privacidad, términos de uso y revisión de seguridad y legal antes de vender.
+- [ ] Versión Android.

@@ -17,6 +17,8 @@ import { edadDesdeISO, isoATextoCorto, leerFechaISO, textoEdadCorregida, textoFe
 import type { Consulta, HistoriaClinica, Paciente } from '../../../src/domain/types';
 import { Aviso, Boton, Cargando, Dato, EnlaceTexto, PantallaSimple, Seccion, estilos } from '../../../src/ui/componentes';
 import { colores, espacio, radio, texto } from '../../../src/ui/tema';
+import { usePlan } from '../../../src/plan/PlanProvider';
+import { irAPlanes } from '../../../src/ui/pro';
 
 function medidas(c: Consulta): string {
   const partes: string[] = [];
@@ -27,6 +29,7 @@ function medidas(c: Consulta): string {
 }
 
 export default function Expediente() {
+  const { esPro } = usePlan();
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
   const [paciente, setPaciente] = useState<Paciente | null>(null);
@@ -122,9 +125,9 @@ export default function Expediente() {
         onPress={() => router.push({ pathname: '/pacientes/[id]/crecimiento', params: { id } })}
       />
       <Boton
-        texto="Enviar WhatsApp"
+        texto={esPro ? 'Enviar WhatsApp' : 'Enviar WhatsApp 🔒 Pro'}
         variante="secundario"
-        onPress={() => router.push({ pathname: '/whatsapp', params: { pacienteId: id } })}
+        onPress={() => (esPro ? router.push({ pathname: '/whatsapp', params: { pacienteId: id } }) : irAPlanes('whatsapp'))}
       />
 
       <View style={{ height: espacio.l }} />
@@ -171,7 +174,13 @@ export default function Expediente() {
 
       <Seccion
         titulo={`Recetas${recetas.length ? ` (últimas ${recetas.length})` : ''}`}
-        accion={<EnlaceTexto texto="+ Nueva receta" onPress={() => router.push({ pathname: '/recetas/nueva', params: { pacienteId: id } })} />}
+        accion={
+          esPro ? (
+            <EnlaceTexto texto="+ Nueva receta" onPress={() => router.push({ pathname: '/recetas/nueva', params: { pacienteId: id } })} />
+          ) : (
+            <EnlaceTexto texto="🔒 Nueva receta (Pro)" onPress={() => irAPlanes('receta')} />
+          )
+        }
       >
         {recetas.length === 0 ? (
           <Text style={estilos.suave}>Sin recetas.</Text>

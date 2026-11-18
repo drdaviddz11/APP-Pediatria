@@ -13,8 +13,11 @@ import { textoFechaHora } from '../../src/domain/fechas';
 import { ChipEstado } from '../../src/ui/agenda';
 import { Aviso, Boton, Cargando, Dato, EnlaceTexto, PantallaSimple, Seccion, estilos } from '../../src/ui/componentes';
 import { colores, espacio, texto } from '../../src/ui/tema';
+import { usePlan } from '../../src/plan/PlanProvider';
+import { irAPlanes } from '../../src/ui/pro';
 
 export default function DetalleCita() {
+  const { esPro } = usePlan();
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
   const [cita, setCita] = useState<Cita | null>(null);
@@ -104,9 +107,9 @@ export default function DetalleCita() {
         ))}
         {sePuedeReprogramar(c.estado) && (
           <Boton
-            texto="Enviar WhatsApp (recordatorio)"
+            texto={esPro ? 'Enviar WhatsApp (recordatorio)' : 'Enviar WhatsApp 🔒 Pro'}
             variante="secundario"
-            onPress={() => router.push({ pathname: '/whatsapp', params: { citaId: c.id } })}
+            onPress={() => (esPro ? router.push({ pathname: '/whatsapp', params: { citaId: c.id } }) : irAPlanes('whatsapp'))}
           />
         )}
         {sePuedeReprogramar(c.estado) && (

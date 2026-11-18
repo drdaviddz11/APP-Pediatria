@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Suspense, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { migrarBaseDeDatos } from '../src/db/esquema';
+import { PlanProvider } from '../src/plan/PlanProvider';
 import { SincronizacionAutomatica } from '../src/sincronizacion/automatica';
 import { Cargando } from '../src/ui/componentes';
 import { AnfitrionDialogos } from '../src/ui/dialogo';
@@ -36,6 +37,7 @@ export default function Raiz() {
     <Suspense fallback={<Cargando />}>
       <SQLiteProvider databaseName="pediacontrol.db" onInit={migrarBaseDeDatos} useSuspense>
         <StatusBar style="dark" />
+        <PlanProvider>
         <Stack
           screenOptions={{
             // Encabezado sólido: el contenido empieza debajo (iOS 26+ lo haría transparente).
@@ -66,6 +68,7 @@ export default function Raiz() {
           <Stack.Screen name="recetas/nueva" options={{ title: 'Nueva receta' }} />
           <Stack.Screen name="recetas/[id]" options={{ title: 'Receta' }} />
           <Stack.Screen name="recetas/favoritos" options={{ title: 'Medicamentos favoritos' }} />
+          <Stack.Screen name="plan" options={{ title: 'Versión Gratis y Pro' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />
@@ -74,6 +77,7 @@ export default function Raiz() {
           <Stack.Screen name="pacientes/[id]/crecimiento" options={{ title: 'Gráficas de crecimiento' }} />
           <Stack.Screen name="consultas/[id]" options={{ title: 'Consulta' }} />
         </Stack>
+        </PlanProvider>
         <SincronizacionAutomatica />
         <AnfitrionDialogos />
       </SQLiteProvider>
