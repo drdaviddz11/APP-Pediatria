@@ -12,6 +12,9 @@ import { calcularEdad, deDate, isoATextoCorto, leerFechaISO, textoEdad, textoFec
 import type { Consulta, NotaAclaratoria, Paciente } from '../../src/domain/types';
 import { Boton, Campo, Cargando, Dato, EnlaceTexto, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
 import { EvaluacionNutricional } from '../../src/ui/EvaluacionNutricional';
+import { textoDinero, textoFormaPago } from '../../src/caja/dinero';
+import { Cobro, cobroDeConsulta, leerAjustesCaja } from '../../src/db/caja';
+import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 
 function conUnidad(v: number | null, unidad: string): string | null {
   return v == null ? null : `${v} ${unidad}`;
@@ -26,6 +29,18 @@ export default function VerConsulta() {
   const [previa, setPrevia] = useState<Consulta | null>(null);
   const [nota, setNota] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [cobro, setCobro] = useState<{ cobro: Cobro | null; moneda: string } | null>(null);
+
+  // El cobro se vuelve a leer al regresar de la pantalla de cobro o si llega de otro equipo.
+  useFocusEffectConSync(
+    useCallback(() => {
+      let vigente = true;
+      void Promise.all([cobroDeConsulta(db, id), leerAjustesCaja(db)]).then(([c, a]) => vigente && setCobro({ cobro: c, moneda: a.moneda }));
+      return () => {
+        vigente = false;
+      };
+    }, [db, id]),
+  );
 
   const cargar = useCallback(async () => {
     const c = await obtenerConsulta(db, id);
@@ -130,6 +145,25 @@ export default function VerConsulta() {
           />
         )}
       </Seccion>
+
+      {cobro && (
+        <Seccion titulo="Cobro">
+          {cobro.cobro ? (
+            <Text style={estilos.normal}>
+              {cobro.cobro.concepto}: {textoDinero(cobro.cobro.montoCentavos, cobro.moneda)} · {textoFormaPago(cobro.cobro.forma)}
+            </Text>
+          ) : (
+            <>
+              <Text style={[estilos.suave, { marginBottom: 8 }]}>Esta consulta no tiene cobro registrado.</Text>
+              <Boton
+                texto="Registrar cobro"
+                variante="secundario"
+                onPress={() => router.push({ pathname: '/caja/cobro', params: { consultaId: consulta.id, pacienteId: consulta.pacienteId } })}
+              />
+            </>
+          )}
+        </Seccion>
+      )}
 
       <Seccion titulo="Notas aclaratorias">
         <Text style={[estilos.suave, { marginBottom: 8 }]}>

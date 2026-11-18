@@ -325,6 +325,59 @@ export const MIGRACIONES: string[] = [
   ` +
     // Las 10 tablas de la versión 6 (lista fija: las tablas futuras tendrán sus triggers en otra migración).
     sqlTriggersCaptura(TABLAS_SYNC.slice(0, 10)),
+
+  // Versión 7: caja del consultorio (cobros y cierre diario).
+  `
+  CREATE TABLE cobros (
+    id TEXT PRIMARY KEY NOT NULL,
+    fecha TEXT NOT NULL,                       -- fecha y hora ISO del cobro
+    dia TEXT NOT NULL,                         -- día local AAAA-MM-DD (para el cierre)
+    paciente_id TEXT REFERENCES pacientes (id) ON DELETE CASCADE,
+    consulta_id TEXT REFERENCES consultas (id) ON DELETE CASCADE,
+    concepto TEXT NOT NULL,
+    monto_centavos INTEGER NOT NULL CHECK (monto_centavos > 0),
+    forma TEXT NOT NULL CHECK (forma IN ('efectivo', 'tarjeta', 'transferencia')),
+    nota TEXT NOT NULL DEFAULT '',
+    anulado INTEGER NOT NULL DEFAULT 0,
+    motivo_anulacion TEXT NOT NULL DEFAULT '',
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT NOT NULL
+  );
+  CREATE INDEX idx_cobros_dia ON cobros (dia);
+  CREATE INDEX idx_cobros_consulta ON cobros (consulta_id);
+
+  CREATE TABLE cierres (
+    dia TEXT PRIMARY KEY NOT NULL,
+    cerrado_en TEXT NOT NULL,
+    total_centavos INTEGER NOT NULL,
+    cantidad INTEGER NOT NULL,
+    resumen TEXT NOT NULL,                     -- JSON con el total por forma de pago
+    nota TEXT NOT NULL DEFAULT ''
+  );
+
+  -- Un día cerrado ya no acepta cobros nuevos ni cambios (hay que reabrirlo). No aplica a lo que llega de otro equipo.
+  CREATE TRIGGER cobros_dia_cerrado_crear BEFORE INSERT ON cobros
+  WHEN (SELECT aplicando FROM sync_control WHERE id = 1) = 0 AND EXISTS (SELECT 1 FROM cierres WHERE dia = NEW.dia)
+  BEGIN
+    SELECT RAISE(ABORT, 'CERRADO: ese día ya está cerrado. Reábralo para agregar cobros.');
+  END;
+
+  CREATE TRIGGER cobros_dia_cerrado_cambiar BEFORE UPDATE ON cobros
+  WHEN (SELECT aplicando FROM sync_control WHERE id = 1) = 0 AND EXISTS (SELECT 1 FROM cierres WHERE dia IN (OLD.dia, NEW.dia))
+  BEGIN
+    SELECT RAISE(ABORT, 'CERRADO: ese día ya está cerrado. Reábralo para hacer cambios.');
+  END;
+
+  -- Los cobros no se borran: se anulan con un motivo (queda el registro). Solo desaparecen junto con un
+  -- paciente de demostración.
+  CREATE TRIGGER cobros_sin_borrar BEFORE DELETE ON cobros
+  WHEN (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+    AND (OLD.paciente_id IS NULL OR EXISTS (SELECT 1 FROM pacientes WHERE id = OLD.paciente_id))
+  BEGIN
+    SELECT RAISE(ABORT, 'Los cobros no se borran: anúlelos indicando el motivo.');
+  END;
+  ` +
+    sqlTriggersCaptura(TABLAS_SYNC.slice(10, 12)),
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

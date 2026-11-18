@@ -87,6 +87,23 @@ Probada con dos, tres y cuatro equipos simulados (SQLite real) y un servidor Sup
 | Actualización de una base existente (versión 5 → 6) | No se pierde nada; la sincronización empieza desactivada |
 | 300 expedientes con consulta | Enviados y recibidos en menos de 1 segundo cada uno (en computadora) |
 
+## Caja y cierre diario
+
+| Prueba | Resultado |
+|---|---|
+| Lectura de montos ("1250", "1,250.50", "L 1250"; rechaza negativos, >2 decimales, texto) | Correcta |
+| Sumas exactas en centavos (0.10 + 0.20 = 0.30) | Correctas |
+| Precio sugerido: primera vez si el paciente no tiene consultas previas, control si sí | Correcto |
+| Consultas del día sin cobro | Aparecen hasta que se cobran |
+| Un cobro por consulta; validaciones de concepto, monto y forma de pago | Correctas |
+| Anular con motivo; no se pueden borrar cobros | Correcto |
+| Cerrar el día: totales por forma de pago, sin contar anulados | Correctos |
+| Día cerrado: no acepta cobros nuevos ni anulaciones; reabrir y volver a cerrar | Correcto, con bitácora |
+| No se puede cerrar un día futuro | Correcto |
+| Resumen mensual y CSV (acentos, comas, comillas y protección contra fórmulas) | Correctos |
+| Cobros y cierres entre dos equipos sincronizados (incluye reapertura) | Iguales en ambos |
+| Actualización de una base existente a la versión 7 | Sin pérdida de datos |
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

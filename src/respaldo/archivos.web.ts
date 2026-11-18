@@ -8,7 +8,18 @@ export interface ArchivoElegido {
 
 /** Descarga el archivo. Devuelve una función de limpieza (aquí no hay archivo temporal que borrar). */
 export async function guardarArchivoRespaldo(nombre: string, texto: string): Promise<() => void> {
-  const blob = new Blob([texto], { type: 'application/octet-stream' });
+  return guardarArchivo(nombre, texto, { mimeType: 'application/octet-stream', UTI: 'public.data', titulo: '' });
+}
+
+export interface TipoArchivo {
+  mimeType: string;
+  UTI: string;
+  titulo: string;
+}
+
+/** Descarga cualquier archivo de texto a la carpeta Descargas. */
+export async function guardarArchivo(nombre: string, texto: string, tipo: TipoArchivo): Promise<() => void> {
+  const blob = new Blob([texto], { type: tipo.mimeType });
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement('a');
   enlace.href = url;

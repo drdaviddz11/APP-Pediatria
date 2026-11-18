@@ -59,6 +59,10 @@ export default function Raiz() {
           <Stack.Screen name="configuracion-mensajes" options={{ title: 'Mensajes y controles' }} />
           <Stack.Screen name="respaldo" options={{ title: 'Respaldo' }} />
           <Stack.Screen name="sincronizacion" options={{ title: 'Sincronización' }} />
+          <Stack.Screen name="caja/index" options={{ title: 'Caja del día' }} />
+          <Stack.Screen name="caja/cobro" options={{ title: 'Registrar cobro', presentation: 'modal' }} />
+          <Stack.Screen name="caja/mes" options={{ title: 'Ingresos del mes' }} />
+          <Stack.Screen name="caja/precios" options={{ title: 'Precios sugeridos' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />

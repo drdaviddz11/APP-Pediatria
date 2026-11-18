@@ -16,6 +16,8 @@ import { FilaCita } from '../src/ui/agenda';
 import { Aviso, PantallaSimple, Seccion, estilos } from '../src/ui/componentes';
 import { colores, espacio, radio, texto } from '../src/ui/tema';
 import { IndicadorSync } from '../src/sincronizacion/IndicadorSync';
+import { textoDinero } from '../src/caja/dinero';
+import { diasSinCerrar, leerAjustesCaja, totalDeHoy } from '../src/db/caja';
 
 interface Datos {
   hoy: Cita[];
@@ -27,6 +29,7 @@ interface Datos {
   /** Días desde el último respaldo (null: nunca); solo si hay pacientes. */
   diasRespaldo: number | null;
   hayPacientes: boolean;
+  caja: { totalCentavos: number; cantidad: number; moneda: string; sinCerrar: string[] };
 }
 
 const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
@@ -35,6 +38,7 @@ const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
   { texto: 'Nueva cita', icono: '＋', ruta: '/agenda/nueva' },
   { texto: 'Nuevo paciente', icono: '👶', ruta: '/pacientes/nuevo' },
   { texto: 'Registrar consulta', icono: '🩺', ruta: { pathname: '/pacientes', params: { seleccionar: 'consulta' } } },
+  { texto: 'Caja del día', icono: '💵', ruta: '/caja' },
   { texto: 'Horario y ajustes', icono: '⚙️', ruta: '/configuracion' },
   { texto: 'Respaldo', icono: '💾', ruta: '/respaldo' },
   { texto: 'Sincronización', icono: '☁️', ruta: '/sincronizacion' },
@@ -65,6 +69,7 @@ export default function Panel() {
           leerInfoRespaldo(db),
           resumenActual(db),
         ]);
+        const [hoyCaja, ajustesCaja, sinCerrar] = await Promise.all([totalDeHoy(db), leerAjustesCaja(db), diasSinCerrar(db)]);
         if (activo) {
           setDatos({
             hoy: citasHoy,
@@ -75,6 +80,7 @@ export default function Panel() {
             citasManana: manana.length,
             diasRespaldo: diasDesde(respaldo.ultimo),
             hayPacientes: totales.pacientes > 0,
+            caja: { ...hoyCaja, moneda: ajustesCaja.moneda, sinCerrar },
           });
         }
       })();
@@ -132,6 +138,25 @@ export default function Panel() {
         </Text>
         <Text style={s.tarjetaAccion}>Ver lista y enviar WhatsApp ›</Text>
       </Pressable>
+
+      {datos && (
+        <Pressable
+          onPress={() => router.push(datos.caja.sinCerrar.length > 0 ? { pathname: '/caja', params: { dia: datos.caja.sinCerrar[datos.caja.sinCerrar.length - 1] } } : '/caja')}
+          accessibilityRole="button"
+          style={({ pressed }) => [s.tarjetaCaja, datos.caja.sinCerrar.length > 0 && s.tarjetaCajaAviso, pressed && { opacity: 0.8 }]}
+        >
+          <Text style={s.cajaTexto}>
+            💵 Caja de hoy: <Text style={{ fontWeight: '800' }}>{textoDinero(datos.caja.totalCentavos, datos.caja.moneda)}</Text> ·{' '}
+            {datos.caja.cantidad} {datos.caja.cantidad === 1 ? 'cobro' : 'cobros'} ›
+          </Text>
+          {datos.caja.sinCerrar.length > 0 && (
+            <Text style={[s.cajaTexto, { color: colores.aviso, fontWeight: '700' }]}>
+              {datos.caja.sinCerrar.length === 1 ? 'Hay 1 día anterior sin cerrar.' : `Hay ${datos.caja.sinCerrar.length} días anteriores sin cerrar.`} Toque para
+              revisarlo.
+            </Text>
+          )}
+        </Pressable>
+      )}
 
       <View style={s.accesos}>
         {ACCESOS.map((a) => (
@@ -243,6 +268,17 @@ const s = StyleSheet.create({
     marginBottom: espacio.m,
   },
   avisoRespaldoTexto: { color: colores.peligro, fontWeight: '700', fontSize: texto.pequeno },
+  tarjetaCaja: {
+    backgroundColor: colores.superficie,
+    borderRadius: radio.l,
+    borderWidth: 1,
+    borderColor: colores.borde,
+    padding: espacio.m,
+    marginBottom: espacio.l,
+    gap: 4,
+  },
+  tarjetaCajaAviso: { backgroundColor: colores.avisoSuave, borderColor: colores.aviso },
+  cajaTexto: { fontSize: texto.normal, color: colores.texto },
   tarjetaControles: {
     backgroundColor: colores.primario,
     borderRadius: radio.l,

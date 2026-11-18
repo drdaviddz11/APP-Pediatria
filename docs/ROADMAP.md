@@ -63,6 +63,16 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Sincronización automática entre teléfono y computadora (ver fase 5).
 - [ ] Publicarla como página web con https o como app instalable (después de la revisión de seguridad).
 
+## Caja y cierre diario (agregado a petición del médico)
+
+- [x] Cobro en cada consulta con precio sugerido (primera vez / control) y otros ingresos.
+- [x] Formas de pago: efectivo, tarjeta, transferencia. Montos en centavos (sumas exactas).
+- [x] Anulación con motivo (los cobros no se borran) y bitácora.
+- [x] Cierre diario que bloquea cambios; reapertura registrada; aviso de días sin cerrar.
+- [x] Resumen mensual y exportación CSV para la contabilidad; todo se sincroniza cifrado.
+- [ ] Gastos del día (opcional, si se necesita más adelante).
+- [ ] Recibos o facturas (requisitos fiscales del SAR de Honduras: revisar antes).
+
 ## Fase 5 — Servidor, cuentas y seguridad
 
 - [x] Sincronizar los datos entre teléfono y computadora: Supabase plan gratuito, cifrado de extremo a extremo, funciona sin internet, último cambio gana, avisos de expediente repetido y citas encimadas, limpieza diaria de versiones viejas.

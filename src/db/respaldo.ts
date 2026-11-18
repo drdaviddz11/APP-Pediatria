@@ -16,6 +16,8 @@ const TABLAS = [
   'citas',
   'mensajes_whatsapp',
   'controles_descartados',
+  'cobros',
+  'cierres',
 ];
 
 async function versionEsquema(db: SQLiteDatabase): Promise<number> {

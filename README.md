@@ -24,6 +24,7 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - **Síndrome de Down:** al marcarlo en el expediente, la evaluación y las gráficas usan las curvas del CDC para niños con síndrome de Down (Zemel et al., Pediatrics 2015).
 - Alertas de caída del puntaje Z entre consultas.
 - **Funciona en iPhone y en computadora:** la misma app se abre en el navegador (Google Chrome o Microsoft Edge), con pantallas centradas para monitor, ventanas de confirmación propias y WhatsApp Web.
+- **Caja y cierre diario:** cobro al guardar cada consulta (precio sugerido de primera vez o control), otros ingresos (vacunas, certificados, procedimientos), formas de pago efectivo / tarjeta / transferencia, cobros que se anulan con motivo (no se borran), cierre del día que bloquea cambios (se puede reabrir), recordatorio de días sin cerrar y resumen mensual exportable a Excel (CSV) para el contador.
 - **Sincronización entre teléfono y computadora** (plan gratuito de Supabase): cifrada de extremo a extremo, funciona sin internet y envía los cambios al volver la conexión; si un dato cambia en dos equipos gana el más reciente. Pasos en [docs/SINCRONIZACION.md](docs/SINCRONIZACION.md).
 - **Respaldo cifrado:** un archivo con todos los expedientes, consultas, citas y ajustes, protegido con contraseña (AES-256-GCM). Se guarda en iCloud Drive, Google Drive o en la computadora (AirDrop a la Mac), y se puede restaurar en otro teléfono. El panel avisa si el último respaldo tiene más de 7 días.
 
@@ -131,12 +132,14 @@ npx expo start
     configuracion-mensajes.tsx  Textos de los mensajes y criterios de control
     respaldo.tsx       Crear, guardar y restaurar respaldos cifrados
     sincronizacion.tsx Activar la sincronización entre equipos, estado y avisos
+    caja/              Caja del día, registrar cobro, ingresos del mes (CSV) y precios sugeridos
     _layout.tsx        Navegación, base de datos, ventanas de confirmación y aviso de navegador no compatible
     consultas/[id].tsx Detalle de consulta y notas aclaratorias
   src/domain/          Reglas clínicas y de negocio (edad, validaciones). Sin dependencias de la interfaz.
   src/crecimiento/     Evaluación OMS: tablas LMS, puntajes Z, interpretación y curvas
   src/agenda/          Reglas de la agenda: horarios libres, traslapes, estados de las citas
   src/seguimiento/     A quién le toca control; plantillas y enlaces de WhatsApp
+  src/caja/            Montos en centavos, formas de pago, resumen y CSV
   src/sincronizacion/  Sincronización cifrada: registro de cambios, motor (último cambio gana), conexión con Supabase
   src/respaldo/        Formato del archivo de respaldo y cifrado (PBKDF2 + AES-256-GCM); archivos.ts (teléfono) y archivos.web.ts (computadora)
   scripts/             Generadores de las tablas OMS y CDC (síndrome de Down) a partir de las fuentes oficiales

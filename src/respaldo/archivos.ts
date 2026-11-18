@@ -15,6 +15,17 @@ export interface ArchivoElegido {
  * Devuelve una función para borrar el archivo temporal cuando ya no se necesite.
  */
 export async function guardarArchivoRespaldo(nombre: string, texto: string): Promise<() => void> {
+  return guardarArchivo(nombre, texto, { mimeType: 'application/octet-stream', UTI: 'public.data', titulo: 'Guardar respaldo de PediaControl' });
+}
+
+export interface TipoArchivo {
+  mimeType: string;
+  UTI: string;
+  titulo: string;
+}
+
+/** Guarda cualquier archivo de texto con la hoja de compartir del teléfono (Archivos, Drive, correo, AirDrop…). */
+export async function guardarArchivo(nombre: string, texto: string, tipo: TipoArchivo): Promise<() => void> {
   if (!(await Sharing.isAvailableAsync())) throw new Error('Este teléfono no permite compartir archivos desde la app.');
   const archivo = new File(Paths.cache, nombre);
   const borrar = () => {
@@ -27,11 +38,7 @@ export async function guardarArchivoRespaldo(nombre: string, texto: string): Pro
   try {
     archivo.create({ overwrite: true });
     await archivo.write(texto);
-    await Sharing.shareAsync(archivo.uri, {
-      mimeType: 'application/octet-stream',
-      UTI: 'public.data',
-      dialogTitle: 'Guardar respaldo de PediaControl',
-    });
+    await Sharing.shareAsync(archivo.uri, { mimeType: tipo.mimeType, UTI: tipo.UTI, dialogTitle: tipo.titulo });
   } catch (e) {
     borrar();
     throw e;

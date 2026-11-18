@@ -24,6 +24,9 @@ export const TABLAS_SYNC: TablaSync[] = [
   { nombre: 'citas', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
   { nombre: 'mensajes_whatsapp', llave: ['id'], columnasFecha: ['creado_en'] },
   { nombre: 'controles_descartados', llave: ['paciente_id', 'clave'], columnasFecha: ['creado_en'] },
+  // Versión 7 (caja). Siempre al final: el orden de las anteriores no cambia.
+  { nombre: 'cobros', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
+  { nombre: 'cierres', llave: ['dia'], columnasFecha: ['cerrado_en'] },
 ];
 
 /** Ajustes que pertenecen a cada equipo y no se comparten (la fecha del último respaldo de ESTE equipo). */

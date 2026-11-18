@@ -8,6 +8,8 @@ import { Alert } from '../../../src/ui/dialogo';
 import { sumarDias, sumarMeses } from '../../../src/agenda/tiempo';
 import { Pastilla } from '../../../src/ui/agenda';
 import { crearConsulta, ultimaConsultaConPeso } from '../../../src/db/consultas';
+import { crearCobro, leerAjustesCaja, precioSugerido } from '../../../src/db/caja';
+import { FORMAS_PAGO, FormaPago, leerMonto, montoParaCampo } from '../../../src/caja/dinero';
 import { obtenerPaciente } from '../../../src/db/pacientes';
 import {
   aISO,
@@ -97,6 +99,12 @@ export default function NuevaConsulta() {
   const [edema, setEdema] = useState(false);
   const [problemas, setProblemas] = useState<Problema[]>([]);
   const [guardando, setGuardando] = useState(false);
+  // Cobro de la consulta (caja del día)
+  const [cobrar, setCobrar] = useState(true);
+  const [cobroConcepto, setCobroConcepto] = useState('Consulta');
+  const [cobroMonto, setCobroMonto] = useState('');
+  const [cobroForma, setCobroForma] = useState<FormaPago>('efectivo');
+  const [moneda, setMoneda] = useState('L');
 
   useEffect(() => {
     void (async () => {
@@ -107,6 +115,10 @@ export default function NuevaConsulta() {
       ]);
       setPaciente(p);
       setAnterior(a);
+      const [sugerido, ajustes] = await Promise.all([precioSugerido(db, id), leerAjustesCaja(db)]);
+      setCobroConcepto(sugerido.concepto);
+      if (sugerido.centavos > 0) setCobroMonto(montoParaCampo(sugerido.centavos));
+      setMoneda(ajustes.moneda);
       // El motivo de la cita se propone como motivo de consulta.
       if (cita?.motivo) setT((prev) => (prev.motivo ? prev : { ...prev, motivo: cita.motivo }));
     })();
@@ -142,6 +154,11 @@ export default function NuevaConsulta() {
     const medicionesConTipo = { ...m, tipoMedicion: m.tipoMedicion || (m.tallaCm.trim() ? tipoSugerido : '') };
     const lista = validarMediciones(medicionesConTipo, edad?.totalMeses ?? null);
     if (!t.motivo.trim()) lista.unshift({ campo: 'motivo', nivel: 'error', mensaje: 'Escriba el motivo de consulta.' });
+    if (cobrar) {
+      const c = leerMonto(cobroMonto);
+      if (c === null || c === 0)
+        lista.push({ campo: 'cobroMonto', nivel: 'error', mensaje: 'Cobro: escriba el monto (por ejemplo 800) o desactive "Registrar el cobro ahora".' });
+    }
 
     if (t.fechaSeguimiento.trim()) {
       const f = leerFechaUsuario(t.fechaSeguimiento);
@@ -186,6 +203,20 @@ export default function NuevaConsulta() {
         indicaciones: t.indicaciones,
         fechaSeguimiento: seguimiento ? aISO(seguimiento) : null,
       });
+      if (cobrar) {
+        // La consulta ya quedó guardada; si falla el cobro, se avisa y se puede cobrar desde la Caja.
+        try {
+          await crearCobro(db, {
+            pacienteId: id,
+            consultaId,
+            concepto: cobroConcepto,
+            montoCentavos: leerMonto(cobroMonto) ?? 0,
+            forma: cobroForma,
+          });
+        } catch (e) {
+          Alert.alert('Consulta guardada', `El cobro no se registró: ${e instanceof Error ? e.message : String(e)}. Puede cobrarla desde Caja.`);
+        }
+      }
       if (citaId) {
         // La consulta ya quedó guardada; si falla el enlace con la cita, solo se avisa.
         try {
@@ -311,6 +342,37 @@ export default function NuevaConsulta() {
             );
           })}
         </View>
+      </Seccion>
+
+      <Seccion titulo="Cobro">
+        <Interruptor etiqueta="Registrar el cobro ahora" valor={cobrar} alCambiar={setCobrar} />
+        {cobrar ? (
+          <>
+            <Selector<string>
+              etiqueta="Tipo"
+              opciones={[
+                { valor: 'Consulta', texto: 'Primera vez' },
+                { valor: 'Control', texto: 'Control' },
+              ]}
+              valor={cobroConcepto}
+              alCambiar={setCobroConcepto}
+            />
+            <View style={{ height: 12 }} />
+            <Campo
+              etiqueta="Monto"
+              unidad={moneda}
+              value={cobroMonto}
+              onChangeText={setCobroMonto}
+              keyboardType="decimal-pad"
+              placeholder="0.00"
+              problema={problemaDe('cobroMonto')}
+              ayuda="El precio sugerido se cambia en Caja › Precios sugeridos."
+            />
+            <Selector<FormaPago> etiqueta="Forma de pago" opciones={FORMAS_PAGO} valor={cobroForma} alCambiar={setCobroForma} />
+          </>
+        ) : (
+          <Text style={estilos.suave}>Sin cobro ahora (cortesía o se cobrará después desde Caja).</Text>
+        )}
       </Seccion>
 
       <Boton texto={guardando ? 'Guardando…' : 'Guardar consulta'} onPress={guardar} deshabilitado={guardando} />
