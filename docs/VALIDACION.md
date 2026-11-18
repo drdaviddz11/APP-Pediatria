@@ -104,6 +104,21 @@ Probada con dos, tres y cuatro equipos simulados (SQLite real) y un servidor Sup
 | Cobros y cierres entre dos equipos sincronizados (incluye reapertura) | Iguales en ambos |
 | Actualización de una base existente a la versión 7 | Sin pérdida de datos |
 
+## Recetas
+
+| Prueba | Resultado |
+|---|---|
+| Hoja impresa a PDF en Chromium (media carta 612 × 396 pt) comparada con la plantilla de Word | Mismo diseño; nombre, fecha e indicaciones en su lugar |
+| 300 recetas al azar (3 196 indicaciones, palabras muy largas, hasta 16 indicaciones) medidas en el navegador | Ninguna indicación cortada ni perdida; hojas extra cuando hace falta |
+| Numeración continua entre hojas y "Hoja N de M" | Correcta |
+| Texto con caracteres especiales (<, >, &, comillas) | Se imprime tal cual, sin romper la hoja |
+| Validaciones (vacía, más de 40 indicaciones, indicación muy larga) | Correctas |
+| Receta emitida no se modifica; queda en la bitácora | Correcto |
+| Favoritos: sin duplicados, búsqueda sin acentos, los más usados primero, editar y quitar | Correcto |
+| Recetas y favoritos entre dos equipos sincronizados | Iguales en ambos |
+| Impresión desde la computadora (marco oculto + cuadro de impresión) | Correcta en Chromium |
+| Impresión desde el iPhone (AirPrint) | Pendiente de probar en el teléfono |
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

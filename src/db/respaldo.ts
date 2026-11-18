@@ -18,6 +18,8 @@ const TABLAS = [
   'controles_descartados',
   'cobros',
   'cierres',
+  'recetas',
+  'medicamentos_favoritos',
 ];
 
 async function versionEsquema(db: SQLiteDatabase): Promise<number> {

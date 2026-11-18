@@ -378,6 +378,36 @@ export const MIGRACIONES: string[] = [
   END;
   ` +
     sqlTriggersCaptura(TABLAS_SYNC.slice(10, 12)),
+
+  // Versión 8: recetas médicas y medicamentos favoritos.
+  `
+  CREATE TABLE recetas (
+    id TEXT PRIMARY KEY NOT NULL,
+    paciente_id TEXT NOT NULL REFERENCES pacientes (id) ON DELETE CASCADE,
+    consulta_id TEXT REFERENCES consultas (id) ON DELETE CASCADE,
+    fecha TEXT NOT NULL,                       -- fecha y hora ISO de la receta
+    indicaciones TEXT NOT NULL,                -- JSON: lista de indicaciones en orden
+    creado_en TEXT NOT NULL
+  );
+  CREATE INDEX idx_recetas_paciente ON recetas (paciente_id, fecha);
+  CREATE INDEX idx_recetas_consulta ON recetas (consulta_id);
+
+  -- Como las consultas, una receta emitida no se modifica: para corregir se hace una nueva.
+  CREATE TRIGGER recetas_sin_modificar BEFORE UPDATE ON recetas
+  WHEN (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+  BEGIN
+    SELECT RAISE(ABORT, 'Una receta emitida no se modifica; haga una receta nueva.');
+  END;
+
+  CREATE TABLE medicamentos_favoritos (
+    id TEXT PRIMARY KEY NOT NULL,
+    texto TEXT NOT NULL,                       -- indicación completa, como se imprime
+    usos INTEGER NOT NULL DEFAULT 0,
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT NOT NULL
+  );
+  ` +
+    sqlTriggersCaptura(TABLAS_SYNC.slice(12, 14)),
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

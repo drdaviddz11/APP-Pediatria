@@ -9,6 +9,8 @@ import { ahoraMomento } from '../../../src/agenda/tiempo';
 import { Cita, esActiva } from '../../../src/agenda/tipos';
 import { citasDePaciente } from '../../../src/db/agenda';
 import { listarConsultas } from '../../../src/db/consultas';
+import { Receta, recetasDePaciente } from '../../../src/db/recetas';
+import { fechaReceta } from '../../../src/receta/hoja';
 import { FilaCita } from '../../../src/ui/agenda';
 import { obtenerHistoria, obtenerPaciente } from '../../../src/db/pacientes';
 import { edadDesdeISO, isoATextoCorto, leerFechaISO, textoEdadCorregida, textoFechaHora } from '../../../src/domain/fechas';
@@ -31,6 +33,7 @@ export default function Expediente() {
   const [historia, setHistoria] = useState<HistoriaClinica | null>(null);
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [citas, setCitas] = useState<Cita[]>([]);
+  const [recetas, setRecetas] = useState<Receta[]>([]);
   const [noExiste, setNoExiste] = useState(false);
 
   useFocusEffectConSync(
@@ -43,15 +46,17 @@ export default function Expediente() {
           setNoExiste(true);
           return;
         }
-        const [h, c, ci] = await Promise.all([
+        const [h, c, ci, r] = await Promise.all([
           obtenerHistoria(db, id),
           listarConsultas(db, id),
           citasDePaciente(db, id, ahoraMomento().slice(0, 10)),
+          recetasDePaciente(db, id, 10),
         ]);
         if (!activo) return;
         setPaciente(p);
         setHistoria(h);
         setConsultas(c);
+        setRecetas(r);
         setCitas(ci.filter((x) => esActiva(x.estado) && x.estado !== 'completada'));
       })();
       return () => {
@@ -159,6 +164,28 @@ export default function Expediente() {
                 </Text>
               ) : null}
               {medidas(c) ? <Text style={estilos.suave}>{medidas(c)}</Text> : null}
+            </Pressable>
+          ))
+        )}
+      </Seccion>
+
+      <Seccion
+        titulo={`Recetas${recetas.length ? ` (últimas ${recetas.length})` : ''}`}
+        accion={<EnlaceTexto texto="+ Nueva receta" onPress={() => router.push({ pathname: '/recetas/nueva', params: { pacienteId: id } })} />}
+      >
+        {recetas.length === 0 ? (
+          <Text style={estilos.suave}>Sin recetas.</Text>
+        ) : (
+          recetas.map((r) => (
+            <Pressable
+              key={r.id}
+              style={({ pressed }) => [s.consulta, pressed && { opacity: 0.7 }]}
+              onPress={() => router.push({ pathname: '/recetas/[id]', params: { id: r.id } })}
+            >
+              <Text style={s.consultaFecha}>{fechaReceta(new Date(r.fecha))}</Text>
+              <Text style={estilos.suave} numberOfLines={1}>
+                {r.indicaciones.map((t) => t.split('\n')[0]).join(' · ')}
+              </Text>
             </Pressable>
           ))
         )}

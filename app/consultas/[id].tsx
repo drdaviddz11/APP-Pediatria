@@ -14,6 +14,7 @@ import { Boton, Campo, Cargando, Dato, EnlaceTexto, PantallaFormulario, Seccion,
 import { EvaluacionNutricional } from '../../src/ui/EvaluacionNutricional';
 import { textoDinero, textoFormaPago } from '../../src/caja/dinero';
 import { Cobro, cobroDeConsulta, leerAjustesCaja } from '../../src/db/caja';
+import { Receta, recetasDeConsulta } from '../../src/db/recetas';
 import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 
 function conUnidad(v: number | null, unidad: string): string | null {
@@ -30,12 +31,17 @@ export default function VerConsulta() {
   const [nota, setNota] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [cobro, setCobro] = useState<{ cobro: Cobro | null; moneda: string } | null>(null);
+  const [recetas, setRecetas] = useState<Receta[]>([]);
 
   // El cobro se vuelve a leer al regresar de la pantalla de cobro o si llega de otro equipo.
   useFocusEffectConSync(
     useCallback(() => {
       let vigente = true;
-      void Promise.all([cobroDeConsulta(db, id), leerAjustesCaja(db)]).then(([c, a]) => vigente && setCobro({ cobro: c, moneda: a.moneda }));
+      void Promise.all([cobroDeConsulta(db, id), leerAjustesCaja(db), recetasDeConsulta(db, id)]).then(([c, a, r]) => {
+        if (!vigente) return;
+        setCobro({ cobro: c, moneda: a.moneda });
+        setRecetas(r);
+      });
       return () => {
         vigente = false;
       };
@@ -144,6 +150,18 @@ export default function VerConsulta() {
             }
           />
         )}
+      </Seccion>
+
+      <Seccion titulo="Receta">
+        {recetas.map((r) => (
+          <Text key={r.id} style={[estilos.normal, { marginBottom: 8 }]} onPress={() => router.push({ pathname: '/recetas/[id]', params: { id: r.id } })}>
+            ℞ {r.indicaciones.map((t) => t.split('\n')[0]).join(' · ')} ›
+          </Text>
+        ))}
+        <Boton
+          texto={recetas.length ? 'Hacer otra receta' : 'Hacer receta'}
+          onPress={() => router.push({ pathname: '/recetas/nueva', params: { pacienteId: consulta.pacienteId, consultaId: consulta.id } })}
+        />
       </Seccion>
 
       {cobro && (

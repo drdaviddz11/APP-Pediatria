@@ -63,6 +63,15 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Sincronización automática entre teléfono y computadora (ver fase 5).
 - [ ] Publicarla como página web con https o como app instalable (después de la revisión de seguridad).
 
+## Recetas (agregado a petición del médico)
+
+- [x] Formato propio (Recetario_HMC.docx): fondo idéntico, nombre, fecha e indicaciones en su lugar; media carta.
+- [x] Medicamentos favoritos (los más usados primero), búsqueda sin acentos.
+- [x] Guardadas en el expediente y en la consulta; no se modifican; reimprimir o copiar para hacer otra.
+- [x] Varias hojas automáticas si no caben (ninguna indicación queda cortada).
+- [ ] Enviar la receta en PDF por WhatsApp (si se necesita).
+- [ ] Cálculo de dosis por peso (requiere revisión clínica de cada fórmula).
+
 ## Caja y cierre diario (agregado a petición del médico)
 
 - [x] Cobro en cada consulta con precio sugerido (primera vez / control) y otros ingresos.

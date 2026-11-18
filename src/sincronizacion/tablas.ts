@@ -27,6 +27,9 @@ export const TABLAS_SYNC: TablaSync[] = [
   // Versión 7 (caja). Siempre al final: el orden de las anteriores no cambia.
   { nombre: 'cobros', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
   { nombre: 'cierres', llave: ['dia'], columnasFecha: ['cerrado_en'] },
+  // Versión 8 (recetas).
+  { nombre: 'recetas', llave: ['id'], inmutable: true, columnasFecha: ['creado_en'] },
+  { nombre: 'medicamentos_favoritos', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
 ];
 
 /** Ajustes que pertenecen a cada equipo y no se comparten (la fecha del último respaldo de ESTE equipo). */

@@ -63,6 +63,9 @@ export default function Raiz() {
           <Stack.Screen name="caja/cobro" options={{ title: 'Registrar cobro', presentation: 'modal' }} />
           <Stack.Screen name="caja/mes" options={{ title: 'Ingresos del mes' }} />
           <Stack.Screen name="caja/precios" options={{ title: 'Precios sugeridos' }} />
+          <Stack.Screen name="recetas/nueva" options={{ title: 'Nueva receta' }} />
+          <Stack.Screen name="recetas/[id]" options={{ title: 'Receta' }} />
+          <Stack.Screen name="recetas/favoritos" options={{ title: 'Medicamentos favoritos' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />
