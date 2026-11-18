@@ -5,6 +5,25 @@ import { LARGO_MAXIMO_INDICACION, limpiarIndicaciones } from '../receta/hoja';
 import { ahoraISO, normalizar, nuevoId, registrarBitacora } from './util';
 
 export const MAXIMO_INDICACIONES = 40;
+export const PESO_MINIMO = 0.3;
+export const PESO_MAXIMO = 250;
+
+/** Peso sugerido para la receta: el de la consulta, o el último registrado del paciente. */
+export async function pesoParaReceta(
+  db: SQLiteDatabase,
+  pacienteId: string,
+  consultaId?: string | null,
+): Promise<{ pesoKg: number; fecha: string } | null> {
+  const f = consultaId
+    ? await db.getFirstAsync<{ peso_kg: number | null; fecha_hora: string }>('SELECT peso_kg, fecha_hora FROM consultas WHERE id = ?', consultaId)
+    : null;
+  if (f?.peso_kg != null) return { pesoKg: f.peso_kg, fecha: f.fecha_hora };
+  const u = await db.getFirstAsync<{ peso_kg: number; fecha_hora: string }>(
+    'SELECT peso_kg, fecha_hora FROM consultas WHERE paciente_id = ? AND peso_kg IS NOT NULL ORDER BY fecha_hora DESC LIMIT 1',
+    pacienteId,
+  );
+  return u ? { pesoKg: u.peso_kg, fecha: u.fecha_hora } : null;
+}
 
 export interface Receta {
   id: string;
@@ -12,6 +31,7 @@ export interface Receta {
   consultaId: string | null;
   fecha: string;
   indicaciones: string[];
+  pesoKg: number | null;
 }
 
 interface FilaReceta {
@@ -20,6 +40,7 @@ interface FilaReceta {
   consulta_id: string | null;
   fecha: string;
   indicaciones: string;
+  peso_kg?: number | null;
 }
 
 function aReceta(f: FilaReceta): Receta {
@@ -30,7 +51,7 @@ function aReceta(f: FilaReceta): Receta {
   } catch {
     indicaciones = [];
   }
-  return { id: f.id, pacienteId: f.paciente_id, consultaId: f.consulta_id, fecha: f.fecha, indicaciones };
+  return { id: f.id, pacienteId: f.paciente_id, consultaId: f.consulta_id, fecha: f.fecha, indicaciones, pesoKg: f.peso_kg ?? null };
 }
 
 export function validarIndicaciones(lista: string[]): string | null {
@@ -44,20 +65,23 @@ export function validarIndicaciones(lista: string[]): string | null {
 
 export async function crearReceta(
   db: SQLiteDatabase,
-  r: { pacienteId: string; consultaId?: string | null; indicaciones: string[]; fecha?: Date },
+  r: { pacienteId: string; consultaId?: string | null; indicaciones: string[]; fecha?: Date; pesoKg?: number | null },
 ): Promise<string> {
   const error = validarIndicaciones(r.indicaciones);
   if (error) throw new Error(error);
+  const peso = r.pesoKg ?? null;
+  if (peso !== null && !(peso >= PESO_MINIMO && peso <= PESO_MAXIMO)) throw new Error(`Revise el peso (entre ${PESO_MINIMO} y ${PESO_MAXIMO} kg).`);
   const id = nuevoId();
   await db.withTransactionAsync(async () => {
     await db.runAsync(
-      'INSERT INTO recetas (id, paciente_id, consulta_id, fecha, indicaciones, creado_en) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO recetas (id, paciente_id, consulta_id, fecha, indicaciones, creado_en, peso_kg) VALUES (?, ?, ?, ?, ?, ?, ?)',
       id,
       r.pacienteId,
       r.consultaId ?? null,
       (r.fecha ?? new Date()).toISOString(),
       JSON.stringify(limpiarIndicaciones(r.indicaciones)),
       ahoraISO(),
+      peso,
     );
     await registrarBitacora(db, 'receta', id, 'crear');
   });

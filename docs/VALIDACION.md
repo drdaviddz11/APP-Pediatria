@@ -114,6 +114,7 @@ Probada con dos, tres y cuatro equipos simulados (SQLite real) y un servidor Sup
 | Texto con caracteres especiales (<, >, &, comillas) | Se imprime tal cual, sin romper la hoja |
 | Validaciones (vacía, más de 40 indicaciones, indicación muy larga) | Correctas |
 | Receta emitida no se modifica; queda en la bitácora | Correcto |
+| Peso en la receta: se guarda el de ese momento, rechaza valores fuera de 0.3–250 kg, redondeo (3.255 → 3.26 kg), sin peso no se imprime | Correcto |
 | Favoritos: sin duplicados, búsqueda sin acentos, los más usados primero, editar y quitar | Correcto |
 | Recetas y favoritos entre dos equipos sincronizados | Iguales en ambos |
 | Impresión desde la computadora (marco oculto + cuadro de impresión) | Correcta en Chromium |

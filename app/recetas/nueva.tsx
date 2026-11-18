@@ -5,7 +5,9 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { obtenerPaciente } from '../../src/db/pacientes';
-import { crearFavorito, crearReceta, Favorito, listarFavoritos, obtenerReceta, usarFavorito, validarIndicaciones } from '../../src/db/recetas';
+import { crearFavorito, crearReceta, Favorito, listarFavoritos, obtenerReceta, PESO_MAXIMO, PESO_MINIMO, pesoParaReceta, usarFavorito, validarIndicaciones } from '../../src/db/recetas';
+import { leerNumero } from '../../src/domain/validacion';
+import { isoATextoCorto } from '../../src/domain/fechas';
 import type { Paciente } from '../../src/domain/types';
 import { FONDO_RECETA } from '../../src/receta/fondo';
 import { fechaReceta, htmlReceta, limpiarIndicaciones, nombreEnReceta, paginar } from '../../src/receta/hoja';
@@ -25,11 +27,18 @@ export default function NuevaReceta() {
   const [buscar, setBuscar] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [fecha] = useState(() => new Date());
+  const [peso, setPeso] = useState('');
+  const [origenPeso, setOrigenPeso] = useState<string | null>(null);
 
   useEffect(() => {
     void obtenerPaciente(db, pacienteId).then(setPaciente);
+    void pesoParaReceta(db, pacienteId, consultaId).then((p) => {
+      if (!p) return;
+      setPeso(String(Number(p.pesoKg.toFixed(2))));
+      setOrigenPeso(isoATextoCorto(p.fecha));
+    });
     if (base) void obtenerReceta(db, base).then((r) => r && r.indicaciones.length > 0 && setIndicaciones(r.indicaciones));
-  }, [db, pacienteId, base]);
+  }, [db, pacienteId, consultaId, base]);
 
   const cargarFavoritos = useCallback(() => {
     let vigente = true;
@@ -76,17 +85,22 @@ export default function NuevaReceta() {
       Alert.alert('Receta', error);
       return;
     }
+    const pesoKg = peso.trim() ? leerNumero(peso) : null;
+    if (peso.trim() && (pesoKg === null || pesoKg < PESO_MINIMO || pesoKg > PESO_MAXIMO)) {
+      Alert.alert('Peso', `Escriba el peso en kg (por ejemplo 12.5), o déjelo vacío para no imprimirlo.`);
+      return;
+    }
     setGuardando(true);
     let id: string;
     try {
-      id = await crearReceta(db, { pacienteId, consultaId: consultaId ?? null, indicaciones, fecha });
+      id = await crearReceta(db, { pacienteId, consultaId: consultaId ?? null, indicaciones, fecha, pesoKg });
     } catch (e) {
       setGuardando(false);
       Alert.alert('No se pudo guardar', e instanceof Error ? e.message : String(e));
       return;
     }
     try {
-      await imprimirHtml(htmlReceta({ nombre: nombreEnReceta(paciente), fecha, indicaciones: limpias, fondo: FONDO_RECETA }));
+      await imprimirHtml(htmlReceta({ nombre: nombreEnReceta(paciente), pesoKg, fecha, indicaciones: limpias, fondo: FONDO_RECETA }));
     } catch {
       // Si se cancela la impresión, la receta ya está guardada y se puede imprimir desde su detalle.
     }
@@ -100,10 +114,19 @@ export default function NuevaReceta() {
           <Text style={{ fontWeight: '700' }}>Nombre: </Text>
           {nombreEnReceta(paciente)}
         </Text>
-        <Text style={estilos.normal}>
+        <Text style={[estilos.normal, { marginBottom: espacio.m }]}>
           <Text style={{ fontWeight: '700' }}>Fecha: </Text>
           {fechaReceta(fecha)}
         </Text>
+        <Campo
+          etiqueta="Peso"
+          unidad="kg"
+          value={peso}
+          onChangeText={setPeso}
+          keyboardType="decimal-pad"
+          placeholder="Sin peso registrado"
+          ayuda={origenPeso ? `Tomado de la consulta del ${origenPeso}. Puede cambiarlo; si lo deja vacío no se imprime.` : 'Si lo deja vacío no se imprime.'}
+        />
       </Seccion>
 
       <Seccion titulo="℞ Indicaciones">

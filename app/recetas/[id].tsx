@@ -8,7 +8,7 @@ import { obtenerPaciente } from '../../src/db/pacientes';
 import { obtenerReceta, Receta } from '../../src/db/recetas';
 import type { Paciente } from '../../src/domain/types';
 import { FONDO_RECETA } from '../../src/receta/fondo';
-import { fechaReceta, htmlReceta, nombreEnReceta } from '../../src/receta/hoja';
+import { fechaReceta, htmlReceta, nombreEnReceta, textoPeso } from '../../src/receta/hoja';
 import { imprimirHtml } from '../../src/receta/imprimir';
 import { Boton, Cargando, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
 import { Alert } from '../../src/ui/dialogo';
@@ -33,7 +33,7 @@ export default function VerReceta() {
   async function imprimir() {
     try {
       await imprimirHtml(
-        htmlReceta({ nombre: nombreEnReceta(paciente), fecha: new Date(receta.fecha), indicaciones: receta.indicaciones, fondo: FONDO_RECETA }),
+        htmlReceta({ nombre: nombreEnReceta(paciente), pesoKg: receta.pesoKg, fecha: new Date(receta.fecha), indicaciones: receta.indicaciones, fondo: FONDO_RECETA }),
       );
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
@@ -48,9 +48,13 @@ export default function VerReceta() {
           <Text style={{ fontWeight: '700' }}>Nombre: </Text>
           {nombreEnReceta(paciente)}
         </Text>
-        <Text style={[estilos.normal, { marginBottom: espacio.m }]}>
+        <Text style={estilos.normal}>
           <Text style={{ fontWeight: '700' }}>Fecha: </Text>
           {fechaReceta(new Date(receta.fecha))}
+        </Text>
+        <Text style={[estilos.normal, { marginBottom: espacio.m }]}>
+          <Text style={{ fontWeight: '700' }}>Peso: </Text>
+          {receta.pesoKg != null ? textoPeso(receta.pesoKg) : 'no se imprimió'}
         </Text>
         <Text style={[estilos.normal, { fontWeight: '700' }]}>℞</Text>
         {receta.indicaciones.map((t, i) => (

@@ -5,6 +5,8 @@
 /** Posiciones medidas sobre la imagen de la plantilla (1753 × 1115 px), en % de la imagen. */
 const POS = {
   nombre: { izq: 15.8, der: 71.3, base: 22.0 },
+  /** El peso va al final del renglón del nombre. */
+  peso: { ancho: 13.5 },
   fecha: { izq: 76.6, der: 98.5, base: 22.0 },
   indicaciones: { izq: 13.6, der: 93.0, arriba: 27.0, abajo: 88.5 },
 };
@@ -93,8 +95,16 @@ export function paginar(indicaciones: string[]): string[][] {
 /** Límite de una indicación (cabe sola en una hoja con letra de 9 pt). */
 export const LARGO_MAXIMO_INDICACION = 900;
 
+/** 12.5 → "12.5 kg"; 12 → "12 kg"; 3.255 → "3.26 kg" */
+export function textoPeso(kg: number): string {
+  const factor = kg < 10 ? 100 : 10;
+  return `${Math.round(kg * factor + 1e-9) / factor} kg`;
+}
+
 export interface DatosReceta {
   nombre: string;
+  /** Peso en kg; si no hay, no se imprime. */
+  pesoKg?: number | null;
   fecha: Date;
   indicaciones: string[];
   /** data: URI de la imagen de fondo (FONDO_RECETA). */
@@ -107,7 +117,10 @@ export function htmlReceta(d: DatosReceta): string {
   const hojas = paginar(indicaciones);
   if (hojas.length === 0) hojas.push([]);
   const pctX = (v: number) => `${v}%`;
-  const letraNombre = d.nombre.length <= 40 ? 13 : d.nombre.length <= 55 ? 11 : 9.5;
+  const conPeso = d.pesoKg != null;
+  const largoNombre = conPeso ? d.nombre.length * 1.3 : d.nombre.length; // con el peso, hay menos espacio
+  const letraNombre = largoNombre <= 40 ? 13 : largoNombre <= 55 ? 11 : 9.5;
+  const peso = conPeso ? `<div class="campo peso">Peso: ${escapar(textoPeso(d.pesoKg as number))}</div>` : '';
   let numero = 1;
   const paginas = hojas
     .map((lista, i) => {
@@ -115,7 +128,7 @@ export function htmlReceta(d: DatosReceta): string {
       const items = lista.map((t) => `<li>${escapar(t)}</li>`).join('');
       const html = `<div class="pagina"><div class="hoja">
   <img src="${d.fondo}" alt="">
-  <div class="campo nombre">${escapar(d.nombre)}</div>
+  <div class="campo nombre${conPeso ? ' corto' : ''}">${escapar(d.nombre)}</div>${peso}
   <div class="campo fecha">${escapar(fechaReceta(d.fecha))}</div>
   <ol start="${numero}" style="font-size:${puntos}pt">${items.replace(/<li>/g, `<li style="margin-bottom:${puntos * 0.45}pt">`)}</ol>
   ${hojas.length > 1 ? `<div class="campo pie">Hoja ${i + 1} de ${hojas.length}</div>` : ''}
@@ -138,6 +151,9 @@ export function htmlReceta(d: DatosReceta): string {
            text-overflow: ellipsis; line-height: 1; }
   .nombre { left: ${pctX(POS.nombre.izq)}; width: ${pctX(POS.nombre.der - POS.nombre.izq)}; bottom: ${pctX(100 - POS.nombre.base + 0.6)};
             font-size: ${letraNombre}pt; }
+  .nombre.corto { width: ${pctX(POS.nombre.der - POS.nombre.izq - POS.peso.ancho)}; }
+  .peso { left: ${pctX(POS.nombre.der - POS.peso.ancho)}; width: ${pctX(POS.peso.ancho)}; bottom: ${pctX(100 - POS.nombre.base + 0.6)};
+          font-size: 11pt; text-align: right; padding-right: 4pt; }
   .fecha { left: ${pctX(POS.fecha.izq)}; width: ${pctX(POS.fecha.der - POS.fecha.izq)}; bottom: ${pctX(100 - POS.fecha.base + 0.6)};
            font-size: 10pt; text-align: left; overflow: visible; }
   .pie { left: ${pctX(POS.indicaciones.izq)}; bottom: 2.5%; font-size: 8pt; color: #5A6B78; }

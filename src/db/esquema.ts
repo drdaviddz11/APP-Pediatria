@@ -408,6 +408,11 @@ export const MIGRACIONES: string[] = [
   );
   ` +
     sqlTriggersCaptura(TABLAS_SYNC.slice(12, 14)),
+
+  // Versión 9: peso del paciente impreso en la receta (el de ese momento queda guardado con la receta).
+  `
+  ALTER TABLE recetas ADD COLUMN peso_kg REAL;
+  `,
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

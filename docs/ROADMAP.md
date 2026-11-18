@@ -66,6 +66,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 ## Recetas (agregado a petición del médico)
 
 - [x] Formato propio (Recetario_HMC.docx): fondo idéntico, nombre, fecha e indicaciones en su lugar; media carta.
+- [x] Peso del paciente en la receta (de la consulta o el último registrado; se guarda el de ese momento).
 - [x] Medicamentos favoritos (los más usados primero), búsqueda sin acentos.
 - [x] Guardadas en el expediente y en la consulta; no se modifican; reimprimir o copiar para hacer otra.
 - [x] Varias hojas automáticas si no caben (ninguna indicación queda cortada).
