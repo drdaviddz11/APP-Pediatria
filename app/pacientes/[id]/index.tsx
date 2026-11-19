@@ -10,6 +10,8 @@ import { Cita, esActiva } from '../../../src/agenda/tipos';
 import { citasDePaciente } from '../../../src/db/agenda';
 import { listarConsultas } from '../../../src/db/consultas';
 import { Receta, recetasDePaciente } from '../../../src/db/recetas';
+import { Constancia, constanciasDePaciente } from '../../../src/db/constancias';
+import { tituloTipo } from '../../../src/constancia/plantillas';
 import { fechaReceta } from '../../../src/receta/hoja';
 import { FilaCita } from '../../../src/ui/agenda';
 import { obtenerHistoria, obtenerPaciente } from '../../../src/db/pacientes';
@@ -37,6 +39,7 @@ export default function Expediente() {
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [recetas, setRecetas] = useState<Receta[]>([]);
+  const [constancias, setConstancias] = useState<Constancia[]>([]);
   const [noExiste, setNoExiste] = useState(false);
 
   useFocusEffectConSync(
@@ -49,17 +52,19 @@ export default function Expediente() {
           setNoExiste(true);
           return;
         }
-        const [h, c, ci, r] = await Promise.all([
+        const [h, c, ci, r, k] = await Promise.all([
           obtenerHistoria(db, id),
           listarConsultas(db, id),
           citasDePaciente(db, id, ahoraMomento().slice(0, 10)),
           recetasDePaciente(db, id, 10),
+          constanciasDePaciente(db, id, 10),
         ]);
         if (!activo) return;
         setPaciente(p);
         setHistoria(h);
         setConsultas(c);
         setRecetas(r);
+        setConstancias(k);
         setCitas(ci.filter((x) => esActiva(x.estado) && x.estado !== 'completada'));
       })();
       return () => {
@@ -194,6 +199,36 @@ export default function Expediente() {
               <Text style={s.consultaFecha}>{fechaReceta(new Date(r.fecha))}</Text>
               <Text style={estilos.suave} numberOfLines={1}>
                 {r.indicaciones.map((t) => t.split('\n')[0]).join(' · ')}
+              </Text>
+            </Pressable>
+          ))
+        )}
+      </Seccion>
+
+      <Seccion
+        titulo={`Constancias${constancias.length ? ` (últimas ${constancias.length})` : ''}`}
+        accion={
+          esPro ? (
+            <EnlaceTexto texto="+ Nueva constancia" onPress={() => router.push({ pathname: '/constancias/nueva', params: { pacienteId: id } })} />
+          ) : (
+            <EnlaceTexto texto="🔒 Nueva constancia (Pro)" onPress={() => irAPlanes('constancia')} />
+          )
+        }
+      >
+        {constancias.length === 0 ? (
+          <Text style={estilos.suave}>Sin constancias.</Text>
+        ) : (
+          constancias.map((k) => (
+            <Pressable
+              key={k.id}
+              style={({ pressed }) => [s.consulta, pressed && { opacity: 0.7 }]}
+              onPress={() => router.push({ pathname: '/constancias/[id]', params: { id: k.id } })}
+            >
+              <Text style={s.consultaFecha}>
+                {fechaReceta(new Date(k.fecha))} · {tituloTipo(k.tipo)}
+              </Text>
+              <Text style={estilos.suave} numberOfLines={1}>
+                {k.diagnosticos.join(' · ')}
               </Text>
             </Pressable>
           ))

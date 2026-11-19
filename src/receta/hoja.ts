@@ -3,7 +3,7 @@
 // Sirve igual para imprimir desde el teléfono (expo-print) y desde la computadora (navegador).
 
 /** Posiciones medidas sobre la imagen de la plantilla (1753 × 1115 px), en % de la imagen. */
-const POS = {
+export const POS = {
   nombre: { izq: 15.8, der: 71.3, base: 22.0 },
   /** El peso va al final del renglón del nombre. */
   peso: { ancho: 13.5 },
@@ -12,8 +12,8 @@ const POS = {
 };
 
 /** Hoja: media carta horizontal; la imagen ocupa el 96 % para no quedar en la orilla que la impresora no alcanza. */
-const HOJA = { ancho: 8.5, alto: 5.5, imgAncho: 8.16 };
-const IMG_ALTO = HOJA.imgAncho * (1115 / 1753);
+export const HOJA = { ancho: 8.5, alto: 5.5, imgAncho: 8.16 };
+export const IMG_ALTO = HOJA.imgAncho * (1115 / 1753);
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
@@ -27,7 +27,7 @@ export function fechaReceta(d: Date): string {
   return `${d.getDate()} de ${MESES[d.getMonth()]}, ${d.getFullYear()}`;
 }
 
-function escapar(t: string): string {
+export function escapar(t: string): string {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 

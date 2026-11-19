@@ -73,6 +73,14 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [ ] Enviar la receta en PDF por WhatsApp (si se necesita).
 - [ ] Cálculo de dosis por peso (requiere revisión clínica de cada fórmula).
 
+## Constancias (agregado a petición del médico)
+
+- [x] Hoja carta según su PDF: receta arriba (texto de la constancia, firma y sello) y diagnósticos abajo (firma y sello).
+- [x] Tipos: atención médica, reposo/incapacidad, buena salud, texto libre; el texto se puede corregir antes de guardar.
+- [x] Guardadas en el expediente sin modificarse, con folio; imprimir o crear PDF; "hacer otra igual".
+- [x] Firma y sello como imagen subida por el médico (fuera del código público; viaja cifrada en sincronización y respaldos).
+- [ ] Revisión del médico de la redacción de los textos.
+
 ## Caja y cierre diario (agregado a petición del médico)
 
 - [x] Cobro en cada consulta con precio sugerido (primera vez / control) y otros ingresos.

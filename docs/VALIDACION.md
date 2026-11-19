@@ -129,6 +129,21 @@ Probada con dos, tres y cuatro equipos simulados (SQLite real) y un servidor Sup
 | Recetas guardadas visibles en la versión gratis; hacer, imprimir, copiar y favoritos piden Pro | Revisado en el código |
 | WhatsApp (expediente, cita, controles y recordatorios) pide Pro; la lista de controles sigue visible | Revisado en el código |
 
+## Constancias
+
+Pruebas automáticas (`testConstancias`) con SQLite real:
+
+| Prueba | Resultado |
+|---|---|
+| Textos de los 4 tipos, en masculino y femenino; reposo de 1 día y de varios días (cruza de mes y de año) | Correcto |
+| Edad en la constancia (días, meses hasta los 2 años, años) y diagnósticos tomados de la consulta | Correcto |
+| Validación (texto, 1 a 8 diagnósticos, largo) y espacio en la hoja: el texto nunca tapa la firma | Correcto |
+| Constancia emitida no se modifica; queda en la bitácora | Correcto |
+| Firma y sello: solo PNG/JPG, máximo 1.5 MB, guardar, cambiar y quitar | Correcto |
+| Hoja carta: firma arriba y abajo, espacio para firmar a mano si no hay imagen, folio, caracteres especiales escapados | Correcto |
+| Se sincroniza y entra en los respaldos | Correcto |
+| Vista en PDF (Chromium) comparada con el PDF del médico | Correcto |
+
 ## Respaldo en Google Drive
 
 Probado contra un simulador de la API de Google Drive (`testDrive`):

@@ -1,8 +1,8 @@
 // Versión Gratis y versión Pro.
-// Pro incluye las recetas con formato propio y los mensajes de WhatsApp; todo lo demás es gratis.
+// Pro incluye las recetas y constancias con formato propio y los mensajes de WhatsApp; todo lo demás es gratis.
 // Nunca se bloquea el acceso a datos ya guardados: una receta hecha se puede ver aunque ya no se tenga Pro.
 
-export type FuncionPro = 'receta' | 'whatsapp';
+export type FuncionPro = 'receta' | 'constancia' | 'whatsapp';
 
 /**
  * De dónde viene el plan:
@@ -16,6 +16,10 @@ export const FUNCIONES_PRO: Record<FuncionPro, { titulo: string; descripcion: st
   receta: {
     titulo: 'Recetas con su formato',
     descripcion: 'Recetas impresas con el membrete del consultorio, peso del paciente, medicamentos favoritos y reimpresión.',
+  },
+  constancia: {
+    titulo: 'Constancias médicas',
+    descripcion: 'Constancias de atención, reposo y buena salud con su membrete, diagnósticos, firma y sello, listas para imprimir o enviar en PDF.',
   },
   whatsapp: {
     titulo: 'Mensajes de WhatsApp',

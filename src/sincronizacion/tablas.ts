@@ -30,6 +30,8 @@ export const TABLAS_SYNC: TablaSync[] = [
   // Versión 8 (recetas).
   { nombre: 'recetas', llave: ['id'], inmutable: true, columnasFecha: ['creado_en'] },
   { nombre: 'medicamentos_favoritos', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
+  // Versión 10 (constancias).
+  { nombre: 'constancias', llave: ['id'], inmutable: true, columnasFecha: ['creado_en'] },
 ];
 
 /** Ajustes que pertenecen a cada equipo y no se comparten (la fecha del último respaldo de ESTE equipo). */

@@ -1,7 +1,24 @@
-// Imprimir la receta desde la COMPUTADORA: se arma la hoja en un marco invisible y se abre el cuadro de
+// Imprimir desde la COMPUTADORA: se arma la hoja en un marco invisible y se abre el cuadro de
 // impresión del navegador (con vista previa). En Chrome, elegir el tamaño de papel "media carta" si no sale solo.
+// Para el PDF se usa el mismo cuadro con el destino "Guardar como PDF" (el nombre sale del <title> del documento).
 
-export function imprimirHtml(html: string): Promise<void> {
+export interface TamanoHoja {
+  ancho: number;
+  alto: number;
+  horizontal: boolean;
+}
+
+/** El tamaño lo pone la hoja misma (@page); se conserva el parámetro para que el código sea igual al del teléfono. */
+export const HOJA_RECETA: TamanoHoja = { ancho: 612, alto: 396, horizontal: true };
+
+export async function compartirPdf(html: string, _nombreArchivo: string, _hoja: TamanoHoja = HOJA_RECETA): Promise<void> {
+  await imprimirHtml(html);
+}
+
+/** En la computadora el PDF se guarda desde el cuadro de impresión (destino "Guardar como PDF"). */
+export const PDF_CON_DIALOGO_DE_IMPRESION = true;
+
+export function imprimirHtml(html: string, _hoja: TamanoHoja = HOJA_RECETA): Promise<void> {
   return new Promise((resolver, rechazar) => {
     const marco = document.createElement('iframe');
     marco.setAttribute('aria-hidden', 'true');

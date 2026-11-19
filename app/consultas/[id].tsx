@@ -15,6 +15,8 @@ import { EvaluacionNutricional } from '../../src/ui/EvaluacionNutricional';
 import { textoDinero, textoFormaPago } from '../../src/caja/dinero';
 import { Cobro, cobroDeConsulta, leerAjustesCaja } from '../../src/db/caja';
 import { Receta, recetasDeConsulta } from '../../src/db/recetas';
+import { Constancia, constanciasDeConsulta } from '../../src/db/constancias';
+import { tituloTipo } from '../../src/constancia/plantillas';
 import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 import { usePlan } from '../../src/plan/PlanProvider';
 import { AvisoPro } from '../../src/ui/pro';
@@ -35,15 +37,17 @@ export default function VerConsulta() {
   const [guardando, setGuardando] = useState(false);
   const [cobro, setCobro] = useState<{ cobro: Cobro | null; moneda: string } | null>(null);
   const [recetas, setRecetas] = useState<Receta[]>([]);
+  const [constancias, setConstancias] = useState<Constancia[]>([]);
 
   // El cobro se vuelve a leer al regresar de la pantalla de cobro o si llega de otro equipo.
   useFocusEffectConSync(
     useCallback(() => {
       let vigente = true;
-      void Promise.all([cobroDeConsulta(db, id), leerAjustesCaja(db), recetasDeConsulta(db, id)]).then(([c, a, r]) => {
+      void Promise.all([cobroDeConsulta(db, id), leerAjustesCaja(db), recetasDeConsulta(db, id), constanciasDeConsulta(db, id)]).then(([c, a, r, k]) => {
         if (!vigente) return;
         setCobro({ cobro: c, moneda: a.moneda });
         setRecetas(r);
+        setConstancias(k);
       });
       return () => {
         vigente = false;
@@ -166,6 +170,22 @@ export default function VerConsulta() {
           texto={recetas.length ? 'Hacer otra receta' : 'Hacer receta'}
           onPress={() => router.push({ pathname: '/recetas/nueva', params: { pacienteId: consulta.pacienteId, consultaId: consulta.id } })}
         />}
+      </Seccion>
+
+      <Seccion titulo="Constancia">
+        {constancias.map((k) => (
+          <Text key={k.id} style={[estilos.normal, { marginBottom: 8 }]} onPress={() => router.push({ pathname: '/constancias/[id]', params: { id: k.id } })}>
+            📄 {tituloTipo(k.tipo)} · {k.diagnosticos.join(' · ')} ›
+          </Text>
+        ))}
+        {!esPro && <AvisoPro funcion="constancia" compacto />}
+        {esPro && (
+          <Boton
+            texto={constancias.length ? 'Hacer otra constancia' : 'Hacer constancia'}
+            variante="secundario"
+            onPress={() => router.push({ pathname: '/constancias/nueva', params: { pacienteId: consulta.pacienteId, consultaId: consulta.id } })}
+          />
+        )}
       </Seccion>
 
       {cobro && (

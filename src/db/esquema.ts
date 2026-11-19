@@ -413,6 +413,30 @@ export const MIGRACIONES: string[] = [
   `
   ALTER TABLE recetas ADD COLUMN peso_kg REAL;
   `,
+
+  // Versión 10: constancias médicas (hoja carta: constancia con el formato de la receta + diagnósticos, con firma y sello).
+  `
+  CREATE TABLE constancias (
+    id TEXT PRIMARY KEY NOT NULL,
+    paciente_id TEXT NOT NULL REFERENCES pacientes (id) ON DELETE CASCADE,
+    consulta_id TEXT REFERENCES consultas (id) ON DELETE CASCADE,
+    tipo TEXT NOT NULL,                        -- atencion | reposo | buena_salud | libre
+    fecha TEXT NOT NULL,                       -- fecha y hora ISO de emisión
+    texto TEXT NOT NULL,                       -- texto tal como se imprime
+    diagnosticos TEXT NOT NULL,                -- JSON: lista de diagnósticos
+    creado_en TEXT NOT NULL
+  );
+  CREATE INDEX idx_constancias_paciente ON constancias (paciente_id, fecha);
+  CREATE INDEX idx_constancias_consulta ON constancias (consulta_id);
+
+  -- Una constancia emitida no se modifica: para corregir se hace una nueva.
+  CREATE TRIGGER constancias_sin_modificar BEFORE UPDATE ON constancias
+  WHEN (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+  BEGIN
+    SELECT RAISE(ABORT, 'Una constancia emitida no se modifica; haga una nueva.');
+  END;
+  ` +
+    sqlTriggersCaptura(TABLAS_SYNC.slice(14, 15)),
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {
