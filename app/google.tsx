@@ -13,8 +13,10 @@ export default function RegresoDeGoogle() {
       const hash = Platform.OS === 'web' ? window.location.hash : '';
       const error = await recibirRespuestaGoogle(hash);
       if (!vigente) return;
-      // Se reemplaza la dirección para que el permiso no quede en el historial del navegador.
-      router.replace({ pathname: '/respaldo', params: error ? { google: error } : { google: 'ok' } });
+      // Se reemplaza la dirección para que el permiso no quede en el historial del navegador,
+      // y se abre Respaldo encima del inicio para que tenga la flecha de regreso.
+      router.replace('/');
+      setTimeout(() => router.push({ pathname: '/respaldo', params: error ? { google: error } : { google: 'ok' } }), 0);
     })();
     return () => {
       vigente = false;

@@ -141,7 +141,7 @@ Probado contra un simulador de la API de Google Drive (`testDrive`):
 | Una sola carpeta "PediaControl Pro - Respaldos" aunque se conecte varias veces | Correcto |
 | Se guardan los 30 más nuevos; los viejos van a la papelera de Drive (recuperables), no se borran | Correcto |
 | Mensajes claros: conexión vencida, Drive lleno, sin internet | Correcto |
-| Prueba real con la cuenta del médico | Pendiente |
+| Prueba real con la cuenta del médico (19 nov 2026): conectar, subir y ver el respaldo en Drive | Correcto |
 
 ## Pendiente antes de uso clínico
 
