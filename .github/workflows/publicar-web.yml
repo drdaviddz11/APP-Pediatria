@@ -34,6 +34,8 @@ jobs:
           EXPO_PUBLIC_BASE_URL: /APP-Pediatria
           # Edición del Dr. Díaz: funciones Pro activas en su página (la versión de la tienda usará la suscripción).
           EXPO_PUBLIC_EDICION: desarrollador
+          # Cliente de Google (no es secreto): conectar el Google Drive de cada usuario para los respaldos.
+          EXPO_PUBLIC_GOOGLE_CLIENT_ID: 943608219294-60sckk05i7jpn9qvg7j2teq11arpduj5.apps.googleusercontent.com
           # Opcionales (Settings → Secrets and variables → Actions → Variables): así la pantalla
           # de Sincronización ya trae la dirección y la clave pública del servidor.
           EXPO_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}

@@ -129,6 +129,20 @@ Probada con dos, tres y cuatro equipos simulados (SQLite real) y un servidor Sup
 | Recetas guardadas visibles en la versión gratis; hacer, imprimir, copiar y favoritos piden Pro | Revisado en el código |
 | WhatsApp (expediente, cita, controles y recordatorios) pide Pro; la lista de controles sigue visible | Revisado en el código |
 
+## Respaldo en Google Drive
+
+Probado contra un simulador de la API de Google Drive (`testDrive`):
+
+| Prueba | Resultado |
+|---|---|
+| Se pide solo el permiso `drive.file` (la app no ve el resto del Drive) | Correcto |
+| Respuesta de Google: permiso, rechazo y respuesta de otra pestaña (estado distinto) | Correcto |
+| Subir y descargar sin alterar el archivo (acentos, comillas, saltos de línea) | Correcto |
+| Una sola carpeta "PediaControl Pro - Respaldos" aunque se conecte varias veces | Correcto |
+| Se guardan los 30 más nuevos; los viejos van a la papelera de Drive (recuperables), no se borran | Correcto |
+| Mensajes claros: conexión vencida, Drive lleno, sin internet | Correcto |
+| Prueba real con la cuenta del médico | Pendiente |
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

@@ -1,8 +1,8 @@
 // Respaldo cifrado de todos los datos: crear y guardar (Drive, iCloud, computadora) o restaurar.
 
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Alert } from '../src/ui/dialogo';
 import {
@@ -17,8 +17,10 @@ import {
 import { textoFechaHora } from '../src/domain/fechas';
 import { elegirArchivoRespaldo, guardarArchivoRespaldo, INSTRUCCIONES_GUARDAR } from '../src/respaldo/archivos';
 import { cifrarRespaldo, descifrarRespaldo } from '../src/respaldo/cifrado';
+import { ArchivoDrive, Drive, ErrorDrive, NOMBRE_CARPETA, RESPALDOS_A_GUARDAR, textoTamano } from '../src/respaldo/drive';
+import { conectarGoogle, cuentaRecordada, desconectarGoogle, driveActual, driveDisponible } from '../src/respaldo/google';
 import { ArchivoRespaldo, leerArchivo, nombreArchivo, ResumenRespaldo, validarContrasena } from '../src/respaldo/formato';
-import { Aviso, Boton, Campo, Cargando, PantallaFormulario, Seccion, estilos } from '../src/ui/componentes';
+import { Aviso, Boton, Campo, Cargando, EnlaceTexto, PantallaFormulario, Seccion, estilos } from '../src/ui/componentes';
 import { EN_COMPUTADORA, ESTE_EQUIPO } from '../src/ui/plataforma';
 import { colores, espacio, texto } from '../src/ui/tema';
 
@@ -35,12 +37,37 @@ export default function Respaldo() {
   const [progreso, setProgreso] = useState<string | null>(null);
   const [elegido, setElegido] = useState<{ nombre: string; archivo: ArchivoRespaldo } | null>(null);
   const [contrasenaRestaurar, setContrasenaRestaurar] = useState('');
+  // Google Drive (solo en la computadora por ahora)
+  const params = useLocalSearchParams<{ google?: string }>();
+  const [avisoGoogle] = useState(params.google ?? null);
+  const [drive, setDrive] = useState<Drive | null>(null);
+  const [cuenta, setCuenta] = useState<string | null>(null);
+  const [enDrive, setEnDrive] = useState<ArchivoDrive[] | null>(null);
 
   const cargar = useCallback(async () => {
     const [i, r] = await Promise.all([leerInfoRespaldo(db), resumenActual(db)]);
     setInfo(i);
     setActual(r);
+    if (driveDisponible()) {
+      const d = driveActual();
+      setDrive(d);
+      setCuenta(cuentaRecordada());
+      if (d) {
+        try {
+          setEnDrive(await d.listar());
+        } catch (e) {
+          if (e instanceof ErrorDrive && e.sesionVencida) setDrive(null);
+          setEnDrive(null);
+        }
+      }
+    }
   }, [db]);
+
+  useEffect(() => {
+    // El aviso de Google se muestra una vez; se quita de la dirección para que no vuelva a salir al recargar.
+    if (params.google) router.setParams({ google: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,6 +112,83 @@ export default function Respaldo() {
       borrarTemporal?.();
       Alert.alert('No se pudo crear el respaldo', e instanceof Error ? e.message : String(e));
     }
+  }
+
+  function errorDrive(titulo: string, e: unknown) {
+    setProgreso(null);
+    if (e instanceof ErrorDrive && e.sesionVencida) {
+      setDrive(null);
+      Alert.alert(titulo, 'Por seguridad, la conexión con Google dura una hora en la computadora. Conecte otra vez y repita el paso.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Conectar', onPress: conectarGoogle },
+      ]);
+      return;
+    }
+    Alert.alert(titulo, e instanceof Error ? e.message : String(e));
+  }
+
+  async function subirADrive() {
+    if (!drive) return;
+    const error = validarContrasena(contrasena, confirmacion);
+    if (error) {
+      Alert.alert('Contraseña', error);
+      return;
+    }
+    try {
+      setProgreso('Preparando datos…');
+      const { contenido, resumen } = await exportarDatos(db);
+      const cifrado = await cifrarRespaldo(contenido, resumen, contrasena, (f) => setProgreso(`Protegiendo con la contraseña… ${Math.round(f * 100)} %`));
+      setProgreso('Subiendo a Google Drive…');
+      const subido = await drive.subir(nombreArchivo(new Date()), JSON.stringify(cifrado));
+      await registrarRespaldoHecho(db, resumen);
+      try {
+        await drive.limpiar();
+      } catch {
+        // Si no se pudieron quitar los viejos, el respaldo nuevo igual quedó guardado.
+      }
+      setProgreso(null);
+      setContrasena('');
+      setConfirmacion('');
+      await cargar();
+      Alert.alert('Respaldo guardado en Google Drive', `${subido.nombre}
+Carpeta: ${NOMBRE_CARPETA}
+${textoResumen(resumen)}`);
+    } catch (e) {
+      errorDrive('No se pudo subir el respaldo', e);
+    }
+  }
+
+  async function elegirDeDrive(a: ArchivoDrive) {
+    if (!drive) return;
+    try {
+      setProgreso('Descargando de Google Drive…');
+      const archivo = leerArchivo(await drive.descargar(a.id));
+      setProgreso(null);
+      setElegido({ nombre: a.nombre, archivo });
+      setContrasenaRestaurar('');
+    } catch (e) {
+      errorDrive('No se pudo abrir el respaldo', e);
+    }
+  }
+
+  function desconectar() {
+    Alert.alert(
+      'Desconectar Google Drive',
+      'La app deja de tener permiso en esta computadora. Los respaldos que ya están en su Drive no se borran.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Desconectar',
+          style: 'destructive',
+          onPress: async () => {
+            await desconectarGoogle();
+            setDrive(null);
+            setCuenta(null);
+            setEnDrive(null);
+          },
+        },
+      ],
+    );
   }
 
   async function elegirArchivo() {
@@ -149,6 +253,31 @@ export default function Respaldo() {
 
       {progreso && <Aviso tono="info">{progreso}</Aviso>}
 
+      {driveDisponible() && (
+        <Seccion titulo="Google Drive">
+          {avisoGoogle === 'ok' && drive && <Aviso tono="info">Google Drive conectado.</Aviso>}
+          {avisoGoogle && avisoGoogle !== 'ok' && <Aviso>{avisoGoogle}</Aviso>}
+          {drive ? (
+            <>
+              <Text style={[estilos.normal, { fontWeight: '700' }]}>✓ Conectado{cuenta ? `: ${cuenta}` : ''}</Text>
+              <Text style={[estilos.pequeno, { marginTop: espacio.xs }]}>
+                Los respaldos se guardan en la carpeta “{NOMBRE_CARPETA}” de su Drive (los últimos {RESPALDOS_A_GUARDAR}). La app solo puede ver esa carpeta.
+              </Text>
+              <EnlaceTexto texto="Desconectar" onPress={desconectar} />
+            </>
+          ) : (
+            <>
+              <Text style={[estilos.pequeno, { marginBottom: espacio.m }]}>
+                {cuenta
+                  ? `Cuenta: ${cuenta}. Por seguridad, en la computadora Google pide confirmar la conexión cada hora.`
+                  : 'Guarde los respaldos directo en su Google Drive, sin descargar archivos. El respaldo sube cifrado con su contraseña: Google lo guarda pero no puede leerlo. La app solo puede ver su propia carpeta, no el resto de su Drive.'}
+              </Text>
+              <Boton texto={cuenta ? 'Conectar de nuevo' : 'Conectar Google Drive'} onPress={conectarGoogle} deshabilitado={ocupado} />
+            </>
+          )}
+        </Seccion>
+      )}
+
       <Seccion titulo="Hacer un respaldo">
         <Text style={[estilos.pequeno, { marginBottom: espacio.m }]}>
           Se crea un archivo con todos los expedientes, consultas, citas y ajustes, protegido con una contraseña (cifrado AES-256).
@@ -159,7 +288,14 @@ export default function Respaldo() {
         <Aviso>
           Anote la contraseña en un lugar seguro. Si se olvida, el respaldo no se podrá abrir. Use siempre la misma para no confundirse.
         </Aviso>
-        <Boton texto="Crear respaldo y guardar" onPress={() => void crearRespaldo()} deshabilitado={ocupado} />
+        {drive ? (
+          <>
+            <Boton texto="Crear respaldo y subir a Google Drive" onPress={() => void subirADrive()} deshabilitado={ocupado} />
+            <Boton texto="Crear respaldo y descargar archivo" variante="secundario" onPress={() => void crearRespaldo()} deshabilitado={ocupado} />
+          </>
+        ) : (
+          <Boton texto="Crear respaldo y guardar" onPress={() => void crearRespaldo()} deshabilitado={ocupado} />
+        )}
       </Seccion>
 
       <Seccion titulo="¿Dónde guardarlo?">
@@ -224,7 +360,22 @@ export default function Respaldo() {
             <Boton texto="Elegir otro archivo" variante="secundario" onPress={() => void elegirArchivo()} deshabilitado={ocupado} />
           </>
         ) : (
-          <Boton texto="Elegir archivo de respaldo" variante="secundario" onPress={() => void elegirArchivo()} deshabilitado={ocupado} />
+          <>
+            {drive && enDrive && enDrive.length > 0 && (
+              <View style={{ marginBottom: espacio.m }}>
+                <Text style={[estilos.normal, { fontWeight: '700', marginBottom: espacio.xs }]}>En Google Drive</Text>
+                {enDrive.slice(0, 10).map((a) => (
+                  <View key={a.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: espacio.xs }}>
+                    <Text style={estilos.pequeno}>
+                      {a.creado ? textoFechaHora(a.creado) : a.nombre} · {textoTamano(a.bytes)}
+                    </Text>
+                    <EnlaceTexto texto="Usar este" onPress={() => void elegirDeDrive(a)} />
+                  </View>
+                ))}
+              </View>
+            )}
+            <Boton texto="Elegir archivo de respaldo" variante="secundario" onPress={() => void elegirArchivo()} deshabilitado={ocupado} />
+          </>
         )}
       </Seccion>
     </PantallaFormulario>

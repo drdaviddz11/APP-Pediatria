@@ -114,7 +114,9 @@ Decisiones del médico (18 nov 2026): versión Gratis y Pro (Pro = recetas y Wha
 la cuenta de Google se conecta solo para respaldos (la app abre sin cuenta, así no se exige "Entrar con Apple").
 
 - [x] División Gratis / Pro en la app (edición del desarrollador siempre Pro; interruptor para probar la versión gratis).
-- [ ] Respaldo automático en el Google Drive del usuario (permiso limitado a los archivos de la app; cifrado antes de subir). Proyecto de Google Cloud gratuito.
+- [x] Proyecto de Google Cloud "PediaControl Pro" (gratuito, sin facturación): API de Google Drive habilitada, pantalla de consentimiento (Externo, en pruebas) y cliente OAuth web.
+- [x] Respaldo en el Google Drive del usuario desde la computadora (permiso drive.file; cifrado antes de subir; últimos 30; restaurar desde Drive).
+- [ ] Respaldo automático en el teléfono (app propia, cliente OAuth de iOS) y verificación de la app por Google antes de abrirla al público.
 - [ ] Empresa o entidad legal para publicar (Apple pide que las apps de salud las publique una entidad, no una persona) y número D-U-N-S.
 - [ ] Cuenta de Apple Developer ($99 al año), compilación propia (EAS Build) y TestFlight; inscripción en el programa de pequeños desarrolladores (comisión 15 %).
 - [ ] Suscripción dentro de la app (App Store / Google Play, $25 una vez) y verificación de la compra.

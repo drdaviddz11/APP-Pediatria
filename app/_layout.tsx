@@ -69,6 +69,7 @@ export default function Raiz() {
           <Stack.Screen name="recetas/[id]" options={{ title: 'Receta' }} />
           <Stack.Screen name="recetas/favoritos" options={{ title: 'Medicamentos favoritos' }} />
           <Stack.Screen name="plan" options={{ title: 'Versión Gratis y Pro' }} />
+          <Stack.Screen name="google" options={{ title: 'Conectando con Google…' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />
