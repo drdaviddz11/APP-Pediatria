@@ -3,6 +3,9 @@
 // Sirve igual para imprimir desde el teléfono (expo-print) y desde la computadora (navegador).
 
 /** Posiciones medidas sobre la imagen de la plantilla (1753 × 1115 px), en % de la imagen. */
+/** Cuánto queda el texto sobre la línea de Nombre/Fecha, en % del alto: negativo = la base de las letras casi toca la línea. */
+export const SOBRE_LINEA = -0.9;
+
 export const POS = {
   nombre: { izq: 15.8, der: 71.3, base: 22.0 },
   /** El peso va al final del renglón del nombre. */
@@ -149,12 +152,12 @@ export function htmlReceta(d: DatosReceta): string {
   .hoja img { position: absolute; inset: 0; width: 100%; height: 100%; }
   .campo { position: absolute; font-family: Helvetica, Arial, sans-serif; color: #14232E; white-space: nowrap; overflow: hidden;
            text-overflow: ellipsis; line-height: 1; }
-  .nombre { left: ${pctX(POS.nombre.izq)}; width: ${pctX(POS.nombre.der - POS.nombre.izq)}; bottom: ${pctX(100 - POS.nombre.base + 0.6)};
+  .nombre { left: ${pctX(POS.nombre.izq)}; width: ${pctX(POS.nombre.der - POS.nombre.izq)}; bottom: ${pctX(100 - POS.nombre.base + SOBRE_LINEA)};
             font-size: ${letraNombre}pt; }
   .nombre.corto { width: ${pctX(POS.nombre.der - POS.nombre.izq - POS.peso.ancho)}; }
-  .peso { left: ${pctX(POS.nombre.der - POS.peso.ancho)}; width: ${pctX(POS.peso.ancho)}; bottom: ${pctX(100 - POS.nombre.base + 0.6)};
+  .peso { left: ${pctX(POS.nombre.der - POS.peso.ancho)}; width: ${pctX(POS.peso.ancho)}; bottom: ${pctX(100 - POS.nombre.base + SOBRE_LINEA)};
           font-size: 11pt; text-align: right; padding-right: 4pt; }
-  .fecha { left: ${pctX(POS.fecha.izq)}; width: ${pctX(POS.fecha.der - POS.fecha.izq)}; bottom: ${pctX(100 - POS.fecha.base + 0.6)};
+  .fecha { left: ${pctX(POS.fecha.izq)}; width: ${pctX(POS.fecha.der - POS.fecha.izq)}; bottom: ${pctX(100 - POS.fecha.base + SOBRE_LINEA)};
            font-size: 10pt; text-align: left; overflow: visible; }
   .pie { left: ${pctX(POS.indicaciones.izq)}; bottom: 2.5%; font-size: 8pt; color: #5A6B78; }
   ol { position: absolute; margin: 0; padding: 0 0 0 22pt; left: ${pctX(POS.indicaciones.izq)}; width: ${pctX(POS.indicaciones.der - POS.indicaciones.izq)};

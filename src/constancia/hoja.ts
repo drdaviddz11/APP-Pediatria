@@ -4,7 +4,7 @@
 // - Mitad de abajo: "Diagnósticos:" con la lista y otra vez firma y sello.
 // La imagen de firma y sello la sube el médico en la app (no está en el código).
 
-import { escapar, fechaReceta, HOJA, IMG_ALTO, POS } from '../receta/hoja';
+import { escapar, fechaReceta, HOJA, IMG_ALTO, POS, SOBRE_LINEA } from '../receta/hoja';
 import { folioConstancia } from './plantillas';
 
 const CARTA = { ancho: 8.5, alto: 11 };
@@ -115,8 +115,8 @@ export function htmlConstancia(d: DatosHojaConstancia): string {
   .hoja { position: absolute; left: ${izqHoja}in; top: ${arribaHoja}in; width: ${HOJA.imgAncho}in; height: ${IMG_ALTO}in; }
   .hoja > img.fondo { position: absolute; inset: 0; width: 100%; height: 100%; }
   .campo { position: absolute; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; }
-  .nombre { left: ${pct(POS.nombre.izq)}; width: ${pct(POS.nombre.der - POS.nombre.izq)}; bottom: ${pct(100 - POS.nombre.base + 0.6)}; font-size: ${letraNombre}pt; }
-  .fecha { left: ${pct(POS.fecha.izq)}; width: ${pct(POS.fecha.der - POS.fecha.izq)}; bottom: ${pct(100 - POS.fecha.base + 0.6)}; font-size: 10pt; overflow: visible; }
+  .nombre { left: ${pct(POS.nombre.izq)}; width: ${pct(POS.nombre.der - POS.nombre.izq)}; bottom: ${pct(100 - POS.nombre.base + SOBRE_LINEA)}; font-size: ${letraNombre}pt; }
+  .fecha { left: ${pct(POS.fecha.izq)}; width: ${pct(POS.fecha.der - POS.fecha.izq)}; bottom: ${pct(100 - POS.fecha.base + SOBRE_LINEA)}; font-size: 10pt; overflow: visible; }
   .texto { position: absolute; left: ${pct(ARRIBA.texto.izq)}; width: ${pct(ARRIBA.texto.der - ARRIBA.texto.izq)}; top: ${pct(ARRIBA.texto.arriba)};
            height: ${pct(ARRIBA.texto.abajo - ARRIBA.texto.arriba)}; overflow: hidden; font-size: ${puntos}pt; line-height: ${INTERLINEADO}; text-align: justify; }
   .texto p { margin: 0 0 ${puntos * 0.7}pt 0; white-space: pre-wrap; overflow-wrap: anywhere; }
