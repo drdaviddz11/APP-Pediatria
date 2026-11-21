@@ -61,6 +61,7 @@ function MensajeWhatsApp() {
         fecha: cita ? fechaDeMomento(cita.inicio) : null,
         hora: cita ? horaDeMomento(cita.inicio) : null,
         consultorio: cfg.nombreConsultorio,
+        direccion: cfg.direccion,
         horaActual: new Date().getHours(),
       }),
     );

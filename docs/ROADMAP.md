@@ -24,8 +24,9 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Gráficas con curvas OMS en puntajes Z o percentiles y mediciones del paciente.
 - [x] Alertas de caída de puntaje Z y de paso por debajo de −2 DE.
 - [x] Curvas CDC para síndrome de Down (Zemel 2015): evaluación, interpretación por percentil y gráficas.
-- [ ] Revisión médica de interpretaciones y alertas.
-- [ ] Decidir curvas para prematuros antes de 40 semanas corregidas y uso de referencias CDC.
+- [x] Revisión médica de interpretaciones y alertas (21 nov 2026: puntos de corte OMS 2006/2007, caída de Z de 1 punto, límites de plausibilidad y síndrome de Down aprobados).
+- [x] Decisión: solo OMS (sin CDC 2000); edad corregida hasta 24 meses en todos.
+- [ ] Curvas INTERGROWTH-21st para prematuros antes de las 40 semanas corregidas (decidido el 21 nov 2026).
 
 ## Fase 3 — Panel principal y agenda
 
@@ -51,7 +52,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Envío uno tras otro: la app abre cada chat con el mensaje listo; registro de mensajes abiertos.
 - [x] Recordatorios de citas por día (mañana por defecto).
 - [x] Atajos de fecha de seguimiento en la consulta (1 y 2 semanas, 1, 2, 3 y 6 meses).
-- [ ] Revisión médica del calendario de niño sano y de los textos de los mensajes.
+- [x] Revisión médica del calendario de niño sano y de los textos de los mensajes (21 nov 2026: calendario AAP y reglas como están; hora de 12 horas; dirección del consultorio en recordatorios y propuestas).
 
 ## Versión de computadora (adelantada a petición del médico)
 
@@ -79,7 +80,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Tipos: atención médica, reposo/incapacidad, buena salud, texto libre; el texto se puede corregir antes de guardar.
 - [x] Guardadas en el expediente sin modificarse, con folio; imprimir o crear PDF; "hacer otra igual".
 - [x] Firma y sello como imagen subida por el médico (fuera del código público; viaja cifrada en sincronización y respaldos).
-- [ ] Revisión del médico de la redacción de los textos.
+- [x] Revisión del médico de la redacción de los textos (21 nov 2026: "en mi consulta" sin especialidad, "reposo en casa", al menos un diagnóstico).
 
 ## Cumpleaños (agregado a petición del médico)
 

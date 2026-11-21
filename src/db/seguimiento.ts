@@ -10,7 +10,7 @@ import {
   ConfigControles,
   ControlPendiente,
 } from '../seguimiento/controles';
-import { CONFIG_MENSAJES_PREDETERMINADA, ConfigMensajes, TipoMensaje } from '../seguimiento/mensajes';
+import { CONFIG_MENSAJES_PREDETERMINADA, ConfigMensajes, PLANTILLAS_ANTERIORES, TipoMensaje } from '../seguimiento/mensajes';
 import { buscarHorarioLibre, crearCita, leerConfiguracion, obtenerCita } from './agenda';
 import { aBool, ahoraISO, nuevoId, registrarBitacora } from './util';
 
@@ -41,7 +41,12 @@ async function guardarClave(db: SQLiteDatabase, clave: string, valor: object, an
 
 export async function leerConfigMensajes(db: SQLiteDatabase): Promise<ConfigMensajes> {
   const c = await leerClave(db, 'mensajes', CONFIG_MENSAJES_PREDETERMINADA);
-  return { ...c, plantillas: { ...CONFIG_MENSAJES_PREDETERMINADA.plantillas, ...c.plantillas } };
+  const plantillas = { ...CONFIG_MENSAJES_PREDETERMINADA.plantillas, ...c.plantillas };
+  // Un texto que sigue igual al predeterminado de una versión anterior se actualiza al nuevo.
+  for (const [tipo, anteriores] of Object.entries(PLANTILLAS_ANTERIORES) as [TipoMensaje, string[]][]) {
+    if (anteriores.includes(plantillas[tipo])) plantillas[tipo] = CONFIG_MENSAJES_PREDETERMINADA.plantillas[tipo];
+  }
+  return { ...c, plantillas };
 }
 
 export async function guardarConfigMensajes(db: SQLiteDatabase, c: ConfigMensajes): Promise<void> {

@@ -63,7 +63,7 @@ export function textoConstancia(tipo: TipoConstancia, d: DatosPlantilla): string
   const quien = `${f ? 'la' : 'el'} paciente ${d.nombre.trim()}${d.edad ? `, de ${d.edad} de edad` : ''}`;
   const dia = fechaEnTexto(d.fechaAtencion);
   if (tipo === 'atencion') {
-    return `Por medio de la presente hago constar que ${quien}, fue atendid${o} en mi consulta de Pediatría el día ${dia}.\n\n${CIERRE}`;
+    return `Por medio de la presente hago constar que ${quien}, fue atendid${o} en mi consulta el día ${dia}.\n\n${CIERRE}`;
   }
   if (tipo === 'reposo') {
     const dias = Math.max(1, Math.round(d.diasReposo ?? 1));
@@ -72,13 +72,13 @@ export function textoConstancia(tipo: TipoConstancia, d: DatosPlantilla): string
     const periodo =
       dias === 1 ? `el día ${fechaEnTexto(inicio)}` : `del ${fechaEnTexto(inicio)} al ${fechaEnTexto(fin)}, inclusive`;
     return (
-      `Por medio de la presente hago constar que ${quien}, fue atendid${o} en mi consulta de Pediatría el día ${dia}, ` +
+      `Por medio de la presente hago constar que ${quien}, fue atendid${o} en mi consulta el día ${dia}, ` +
       `y por su condición de salud amerita reposo en casa por ${dias} ${dias === 1 ? 'día' : 'días'}, ${periodo}.\n\n${CIERRE}`
     );
   }
   const actividades = (d.actividades ?? '').trim() || 'escolares y deportivas';
   return (
-    `Por medio de la presente hago constar que ${quien}, fue evaluad${o} en mi consulta de Pediatría el día ${dia}, ` +
+    `Por medio de la presente hago constar que ${quien}, fue evaluad${o} en mi consulta el día ${dia}, ` +
     `encontrándose en buen estado de salud y apt${o} para realizar actividades ${actividades}.\n\n${CIERRE}`
   );
 }

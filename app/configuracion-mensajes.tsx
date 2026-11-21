@@ -84,6 +84,13 @@ export default function ConfiguracionMensajes() {
           keyboardType="number-pad"
           ayuda="Se agrega a los números de 8 dígitos."
         />
+        <Campo
+          etiqueta="Dirección del consultorio"
+          value={m.direccion}
+          onChangeText={(v) => setMensajes({ ...m, direccion: v })}
+          placeholder="Honduras Medical Center, Ala Norte, Consultorio …"
+          ayuda='Para [DIRECCION]: "Le esperamos en …". Déjela vacía si no quiere mencionarla.'
+        />
         {TIPOS.map((t) => (
           <Campo
             key={t}

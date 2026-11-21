@@ -172,6 +172,23 @@ Probado contra un simulador de la API de Google Drive (`testDrive`):
 | Mensajes claros: conexión vencida, Drive lleno, sin internet | Correcto |
 | Prueba real con la cuenta del médico (19 nov 2026): conectar, subir y ver el respaldo en Drive | Correcto |
 
+## Decisiones del médico (21 nov 2026)
+
+| Tema | Decisión |
+|---|---|
+| Puntos de corte OMS 2006 y 2007, textos y colores | Aprobados |
+| Alerta por caída de Z | 1 punto o más, y cruce por debajo de −2 DE |
+| Límites de plausibilidad (probable error) | Aprobados (OMS) |
+| Prematuros antes de 40 semanas corregidas | Agregar INTERGROWTH-21st |
+| Edad corregida | Hasta los 24 meses en todos los < 37 semanas |
+| Referencias CDC 2000 | No; solo OMS |
+| Síndrome de Down (CDC Zemel 2015 + IMC OMS desde 2 años) | Aprobado |
+| Calendario de niño sano y reglas de la lista de controles | AAP y reglas actuales |
+| WhatsApp | Hora de 12 horas; dirección del consultorio; el nombre del consultorio lo escribe cada médico |
+| Constancias | "en mi consulta" sin especialidad; "reposo en casa"; al menos un diagnóstico |
+
+Pruebas de mensajes (`testMensajes2`): hora de 12 horas (incluido mediodía y medianoche), dirección opcional sin dobles espacios ni doble punto, y actualización automática de los textos predeterminados anteriores sin tocar los que el médico cambió: Correcto.
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).
