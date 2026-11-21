@@ -143,6 +143,7 @@ Pruebas automáticas (`testConstancias`) con SQLite real:
 | Hoja carta: firma arriba y abajo, espacio para firmar a mano si no hay imagen, folio, caracteres especiales escapados | Correcto |
 | Se sincroniza y entra en los respaldos | Correcto |
 | Vista en PDF (Chromium) comparada con el PDF del médico | Correcto |
+| Nombre, peso y fecha (corta, DD/MM/AAAA) apoyados sobre su línea, sin salirse (a petición del médico, 20 nov 2026) | Correcto |
 
 ## Respaldo en Google Drive
 

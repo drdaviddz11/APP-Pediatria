@@ -18,16 +18,16 @@ export const POS = {
 export const HOJA = { ancho: 8.5, alto: 5.5, imgAncho: 8.16 };
 export const IMG_ALTO = HOJA.imgAncho * (1115 / 1753);
 
-const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 /** Nombre como va en la receta: nombres y apellidos. */
 export function nombreEnReceta(p: { nombres: string; apellidos: string }): string {
   return `${p.nombres} ${p.apellidos}`.replace(/\s+/g, ' ').trim();
 }
 
-/** Como en su Word: "17 de Noviembre, 2026". */
+/** Fecha corta, para que quepa en su línea: "17/11/2026". */
 export function fechaReceta(d: Date): string {
-  return `${d.getDate()} de ${MESES[d.getMonth()]}, ${d.getFullYear()}`;
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return `${dos(d.getDate())}/${dos(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
 export function escapar(t: string): string {
@@ -158,7 +158,7 @@ export function htmlReceta(d: DatosReceta): string {
   .peso { left: ${pctX(POS.nombre.der - POS.peso.ancho)}; width: ${pctX(POS.peso.ancho)}; bottom: ${pctX(100 - POS.nombre.base + SOBRE_LINEA)};
           font-size: 11pt; text-align: right; padding-right: 4pt; }
   .fecha { left: ${pctX(POS.fecha.izq)}; width: ${pctX(POS.fecha.der - POS.fecha.izq)}; bottom: ${pctX(100 - POS.fecha.base + SOBRE_LINEA)};
-           font-size: 10pt; text-align: left; overflow: visible; }
+           font-size: 12pt; text-align: left; overflow: visible; padding-left: 5pt; }
   .pie { left: ${pctX(POS.indicaciones.izq)}; bottom: 2.5%; font-size: 8pt; color: #5A6B78; }
   ol { position: absolute; margin: 0; padding: 0 0 0 22pt; left: ${pctX(POS.indicaciones.izq)}; width: ${pctX(POS.indicaciones.der - POS.indicaciones.izq)};
        top: ${pctX(POS.indicaciones.arriba)}; height: ${pctX(POS.indicaciones.abajo - POS.indicaciones.arriba)}; overflow: hidden;

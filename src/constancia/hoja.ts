@@ -116,7 +116,7 @@ export function htmlConstancia(d: DatosHojaConstancia): string {
   .hoja > img.fondo { position: absolute; inset: 0; width: 100%; height: 100%; }
   .campo { position: absolute; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; }
   .nombre { left: ${pct(POS.nombre.izq)}; width: ${pct(POS.nombre.der - POS.nombre.izq)}; bottom: ${pct(100 - POS.nombre.base + SOBRE_LINEA)}; font-size: ${letraNombre}pt; }
-  .fecha { left: ${pct(POS.fecha.izq)}; width: ${pct(POS.fecha.der - POS.fecha.izq)}; bottom: ${pct(100 - POS.fecha.base + SOBRE_LINEA)}; font-size: 10pt; overflow: visible; }
+  .fecha { left: ${pct(POS.fecha.izq)}; width: ${pct(POS.fecha.der - POS.fecha.izq)}; bottom: ${pct(100 - POS.fecha.base + SOBRE_LINEA)}; font-size: 12pt; overflow: visible; padding-left: 5pt; }
   .texto { position: absolute; left: ${pct(ARRIBA.texto.izq)}; width: ${pct(ARRIBA.texto.der - ARRIBA.texto.izq)}; top: ${pct(ARRIBA.texto.arriba)};
            height: ${pct(ARRIBA.texto.abajo - ARRIBA.texto.arriba)}; overflow: hidden; font-size: ${puntos}pt; line-height: ${INTERLINEADO}; text-align: justify; }
   .texto p { margin: 0 0 ${puntos * 0.7}pt 0; white-space: pre-wrap; overflow-wrap: anywhere; }
