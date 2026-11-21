@@ -32,6 +32,8 @@ export const TABLAS_SYNC: TablaSync[] = [
   { nombre: 'medicamentos_favoritos', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
   // Versión 10 (constancias).
   { nombre: 'constancias', llave: ['id'], inmutable: true, columnasFecha: ['creado_en'] },
+  // Versión 11 (cumpleaños).
+  { nombre: 'felicitaciones', llave: ['paciente_id', 'anio'], columnasFecha: ['creado_en'] },
 ];
 
 /** Ajustes que pertenecen a cada equipo y no se comparten (la fecha del último respaldo de ESTE equipo). */

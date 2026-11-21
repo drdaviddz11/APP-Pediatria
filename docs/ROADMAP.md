@@ -81,6 +81,12 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Firma y sello como imagen subida por el médico (fuera del código público; viaja cifrada en sincronización y respaldos).
 - [ ] Revisión del médico de la redacción de los textos.
 
+## Cumpleaños (agregado a petición del médico)
+
+- [x] Aviso en el panel y pantalla de cumpleaños (hoy y próximos 7 días), de 1 a 18 años.
+- [x] Felicitación por WhatsApp uno tras otro, solo con autorización; plantilla editable con [EDAD]; anotada para no repetirla (migración 11, sincronización y respaldos).
+- [ ] Envío automático (requiere WhatsApp Business Platform, fase 7).
+
 ## Caja y cierre diario (agregado a petición del médico)
 
 - [x] Cobro en cada consulta con precio sugerido (primera vez / control) y otros ingresos.

@@ -3,7 +3,7 @@
 
 import { textoFechaLarga } from '../agenda/tiempo';
 
-export type TipoMensaje = 'recordatorio' | 'propuesta' | 'general';
+export type TipoMensaje = 'recordatorio' | 'propuesta' | 'general' | 'cumpleanos';
 
 export interface ConfigMensajes {
   /** Cómo se presenta el consultorio, por ejemplo "la consulta del Dr. Díaz". */
@@ -13,7 +13,7 @@ export interface ConfigMensajes {
   plantillas: Record<TipoMensaje, string>;
 }
 
-export const MARCAS = ['[SALUDO]', '[CONSULTORIO]', '[NOMBRE]', '[FECHA]', '[HORA]'];
+export const MARCAS = ['[SALUDO]', '[CONSULTORIO]', '[NOMBRE]', '[FECHA]', '[HORA]', '[EDAD]'];
 
 export const CONFIG_MENSAJES_PREDETERMINADA: ConfigMensajes = {
   nombreConsultorio: 'la consulta médica',
@@ -24,6 +24,8 @@ export const CONFIG_MENSAJES_PREDETERMINADA: ConfigMensajes = {
     propuesta:
       '[SALUDO]. Le saludamos de [CONSULTORIO]. A [NOMBRE] le corresponde su cita de control. Le reservamos el [FECHA] a las [HORA]. ¿Nos confirma su asistencia o prefiere otro horario?',
     general: '[SALUDO]. Le saludamos de [CONSULTORIO]. ',
+    cumpleanos:
+      '[SALUDO]. De parte de [CONSULTORIO], le deseamos un muy feliz cumpleaños a [NOMBRE], que hoy cumple [EDAD]. ¡Que tenga un día lleno de alegría! 🎂🎉',
   },
 };
 
@@ -31,6 +33,7 @@ export const NOMBRE_TIPO_MENSAJE: Record<TipoMensaje, string> = {
   recordatorio: 'Recordatorio de cita',
   propuesta: 'Propuesta de cita de control',
   general: 'Mensaje general',
+  cumpleanos: 'Felicitación de cumpleaños',
 };
 
 /** "Buenos días" / "Buenas tardes" / "Buenas noches" según la hora local. */
@@ -61,14 +64,15 @@ export function primerNombre(nombres: string): string {
 
 export function rellenarPlantilla(
   plantilla: string,
-  datos: { nombre: string; fecha?: string | null; hora?: string | null; consultorio: string; horaActual: number },
+  datos: { nombre: string; fecha?: string | null; hora?: string | null; edad?: string | null; consultorio: string; horaActual: number },
 ): string {
   return plantilla
     .replaceAll('[SALUDO]', saludo(datos.horaActual))
     .replaceAll('[CONSULTORIO]', datos.consultorio)
     .replaceAll('[NOMBRE]', datos.nombre)
     .replaceAll('[FECHA]', datos.fecha ? textoFechaLarga(datos.fecha, false) : '[FECHA]')
-    .replaceAll('[HORA]', datos.hora ?? '[HORA]');
+    .replaceAll('[HORA]', datos.hora ?? '[HORA]')
+    .replaceAll('[EDAD]', datos.edad ?? '[EDAD]');
 }
 
 /** Enlace oficial de WhatsApp que abre la conversación con el mensaje escrito (sin enviarlo). */

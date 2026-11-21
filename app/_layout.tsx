@@ -72,6 +72,7 @@ export default function Raiz() {
           <Stack.Screen name="constancias/nueva" options={{ title: 'Nueva constancia' }} />
           <Stack.Screen name="constancias/[id]" options={{ title: 'Constancia' }} />
           <Stack.Screen name="firma" options={{ title: 'Firma y sello' }} />
+          <Stack.Screen name="cumpleanos" options={{ title: 'Cumpleaños' }} />
           <Stack.Screen name="google" options={{ title: 'Conectando con Google…' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />

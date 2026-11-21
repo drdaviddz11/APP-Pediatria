@@ -10,7 +10,7 @@ import { ConfigControles, EDADES_AAP, leerEdades } from '../src/seguimiento/cont
 import { ConfigMensajes, MARCAS, NOMBRE_TIPO_MENSAJE, TipoMensaje } from '../src/seguimiento/mensajes';
 import { Boton, Campo, Cargando, EnlaceTexto, Interruptor, PantallaFormulario, Seccion, estilos } from '../src/ui/componentes';
 
-const TIPOS: TipoMensaje[] = ['recordatorio', 'propuesta', 'general'];
+const TIPOS: TipoMensaje[] = ['recordatorio', 'propuesta', 'general', 'cumpleanos'];
 
 export default function ConfiguracionMensajes() {
   const db = useSQLiteContext();

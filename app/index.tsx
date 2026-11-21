@@ -10,6 +10,7 @@ import { Cita, esActiva, nombreCita } from '../src/agenda/tipos';
 import { citasEntre, citasPorEstado } from '../src/db/agenda';
 import { buscarPacientes, ResumenPaciente } from '../src/db/pacientes';
 import { contarControlesPendientes } from '../src/db/seguimiento';
+import { resumenCumpleanosHoy } from '../src/db/cumpleanos';
 import { diasDesde, leerInfoRespaldo, resumenActual } from '../src/db/respaldo';
 import { edadDesdeISO } from '../src/domain/fechas';
 import { FilaCita } from '../src/ui/agenda';
@@ -30,6 +31,7 @@ interface Datos {
   diasRespaldo: number | null;
   hayPacientes: boolean;
   caja: { totalCentavos: number; cantidad: number; moneda: string; sinCerrar: string[] };
+  cumpleanos: { hoy: number; porFelicitar: number };
 }
 
 const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
@@ -43,6 +45,7 @@ const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
   { texto: 'Respaldo', icono: '💾', ruta: '/respaldo' },
   { texto: 'Sincronización', icono: '☁️', ruta: '/sincronizacion' },
   { texto: 'Controles y WhatsApp', icono: '💬', ruta: '/controles' },
+  { texto: 'Cumpleaños', icono: '🎂', ruta: '/cumpleanos' },
 ];
 
 export default function Panel() {
@@ -69,7 +72,12 @@ export default function Panel() {
           leerInfoRespaldo(db),
           resumenActual(db),
         ]);
-        const [hoyCaja, ajustesCaja, sinCerrar] = await Promise.all([totalDeHoy(db), leerAjustesCaja(db), diasSinCerrar(db)]);
+        const [hoyCaja, ajustesCaja, sinCerrar, cumpleanos] = await Promise.all([
+          totalDeHoy(db),
+          leerAjustesCaja(db),
+          diasSinCerrar(db),
+          resumenCumpleanosHoy(db, dia),
+        ]);
         if (activo) {
           setDatos({
             hoy: citasHoy,
@@ -81,6 +89,7 @@ export default function Panel() {
             diasRespaldo: diasDesde(respaldo.ultimo),
             hayPacientes: totales.pacientes > 0,
             caja: { ...hoyCaja, moneda: ajustesCaja.moneda, sinCerrar },
+            cumpleanos,
           });
         }
       })();
@@ -138,6 +147,19 @@ export default function Panel() {
         </Text>
         <Text style={s.tarjetaAccion}>Ver lista y enviar WhatsApp ›</Text>
       </Pressable>
+
+      {datos && datos.cumpleanos.hoy > 0 && (
+        <Pressable
+          onPress={() => router.push('/cumpleanos')}
+          accessibilityRole="button"
+          style={({ pressed }) => [s.tarjetaCaja, pressed && { opacity: 0.8 }]}
+        >
+          <Text style={s.cajaTexto}>
+            🎂 Hoy {datos.cumpleanos.hoy === 1 ? 'cumple años 1 paciente' : `cumplen años ${datos.cumpleanos.hoy} pacientes`}
+            {datos.cumpleanos.porFelicitar > 0 ? ` · ${datos.cumpleanos.porFelicitar} por felicitar` : ' · todos felicitados'} ›
+          </Text>
+        </Pressable>
+      )}
 
       {datos && (
         <Pressable

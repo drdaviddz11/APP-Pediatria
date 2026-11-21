@@ -21,6 +21,7 @@ const TABLAS = [
   'recetas',
   'medicamentos_favoritos',
   'constancias',
+  'felicitaciones',
 ];
 
 async function versionEsquema(db: SQLiteDatabase): Promise<number> {

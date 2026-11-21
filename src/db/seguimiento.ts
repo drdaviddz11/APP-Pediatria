@@ -192,7 +192,8 @@ export async function registrarMensaje(
     nuevoId(),
     m.pacienteId,
     m.citaId,
-    m.tipo,
+    // Las felicitaciones se anotan en su propia tabla (felicitaciones); aquí quedarían como mensaje general.
+    m.tipo === 'cumpleanos' ? 'general' : m.tipo,
     m.telefono,
     ahoraISO(),
   );

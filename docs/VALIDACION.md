@@ -145,6 +145,19 @@ Pruebas automáticas (`testConstancias`) con SQLite real:
 | Vista en PDF (Chromium) comparada con el PDF del médico | Correcto |
 | Nombre, peso y fecha (corta, DD/MM/AAAA) apoyados sobre su línea, sin salirse (a petición del médico, 20 nov 2026) | Correcto |
 
+## Cumpleaños
+
+Pruebas automáticas (`testCumpleanos`) con SQLite real:
+
+| Prueba | Resultado |
+|---|---|
+| Cumple hoy, en los próximos 7 días, ya pasó; cruce de año; 29 de febrero (28 en años no bisiestos) | Correcto |
+| Solo de 1 a 18 años | Correcto |
+| Mensaje con saludo, nombre y edad, sin información clínica; configuraciones anteriores reciben la plantilla nueva | Correcto |
+| Sin autorización para WhatsApp no se puede seleccionar | Correcto |
+| Una felicitación por paciente y año, aunque se abra dos veces; al año siguiente vuelve a aparecer | Correcto |
+| Se sincroniza y entra en los respaldos | Correcto |
+
 ## Respaldo en Google Drive
 
 Probado contra un simulador de la API de Google Drive (`testDrive`):

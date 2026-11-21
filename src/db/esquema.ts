@@ -437,6 +437,18 @@ export const MIGRACIONES: string[] = [
   END;
   ` +
     sqlTriggersCaptura(TABLAS_SYNC.slice(14, 15)),
+
+  // Versión 11: felicitaciones de cumpleaños enviadas por WhatsApp (una por paciente y año).
+  `
+  CREATE TABLE felicitaciones (
+    paciente_id TEXT NOT NULL REFERENCES pacientes (id) ON DELETE CASCADE,
+    anio INTEGER NOT NULL,
+    telefono TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    PRIMARY KEY (paciente_id, anio)
+  );
+  ` +
+    sqlTriggersCaptura(TABLAS_SYNC.slice(15, 16)),
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {
