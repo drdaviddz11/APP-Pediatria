@@ -60,9 +60,14 @@ export default function Crecimiento() {
         setPaciente(p);
         setEvaluaciones(lista);
         // Rango inicial: el de la medición más reciente.
-        const ultima = [...lista].reverse().find((x) => x.e.edadMesesUsada != null);
+        const ultima = [...lista].reverse().find((x) => x.e.edadMesesUsada != null || x.e.semanasPosmenstruales != null);
+        const disponibles = rangosDisponibles(p.sindromeDown, p.semanasGestacion);
         setRango((r) =>
-          r && rangosDisponibles(p.sindromeDown).includes(r) ? r : rangoParaEdad(ultima?.e.edadMesesUsada ?? 0, p.sindromeDown),
+          r && disponibles.includes(r)
+            ? r
+            : ultima?.e.semanasPosmenstruales != null
+              ? 'prematuro'
+              : rangoParaEdad(ultima?.e.edadMesesUsada ?? 0, p.sindromeDown),
         );
       })();
       return () => {
@@ -100,7 +105,7 @@ export default function Crecimiento() {
 
       <Selector<Rango>
         etiqueta="Edad"
-        opciones={rangosDisponibles(paciente.sindromeDown).map((r) => ({ valor: r, texto: NOMBRE_RANGO[r] }))}
+        opciones={rangosDisponibles(paciente.sindromeDown, paciente.semanasGestacion).map((r) => ({ valor: r, texto: NOMBRE_RANGO[r] }))}
         valor={rango}
         alCambiar={setRango}
       />

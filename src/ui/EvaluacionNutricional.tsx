@@ -5,6 +5,7 @@ import type { AlertaTendencia } from '../crecimiento/consulta';
 import { AVISO_CLINICO, interpretarIndicador, Nivel, NOTA_DOWN, resumenNutricional } from '../crecimiento/interpretacion';
 import { textoPercentil } from '../crecimiento/lms';
 import { esReferenciaDown, NOMBRE_INDICADOR, NOMBRE_REFERENCIA, ResultadoEvaluacion } from '../crecimiento/tipos';
+import { textoEPM } from '../crecimiento/intergrowth';
 import { colores, espacio, radio, texto } from './tema';
 
 const COLOR_NIVEL: Record<Nivel, { fondo: string; texto: string }> = {
@@ -50,6 +51,13 @@ export function EvaluacionNutricional({
         <Text style={s.suave}>
           Edad {e.usaEdadCorregida ? 'corregida' : ''}: {textoEdadDias(e.edadDiasUsada)}
           {e.usaEdadCorregida ? ` (cronológica ${textoEdadDias(e.edadDiasCronologica)})` : ''}
+          {e.referencia ? ` · ${NOMBRE_REFERENCIA[e.referencia]}` : ''}
+        </Text>
+      )}
+
+      {e.semanasPosmenstruales != null && (
+        <Text style={s.suave}>
+          Edad posmenstrual: {textoEPM(e.semanasPosmenstruales)} (cronológica {textoEdadDias(e.edadDiasCronologica)})
           {e.referencia ? ` · ${NOMBRE_REFERENCIA[e.referencia]}` : ''}
         </Text>
       )}

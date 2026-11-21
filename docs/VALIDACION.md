@@ -189,9 +189,19 @@ Probado contra un simulador de la API de Google Drive (`testDrive`):
 
 Pruebas de mensajes (`testMensajes2`): hora de 12 horas (incluido mediodía y medianoche), dirección opcional sin dobles espacios ni doble punto, y actualización automática de los textos predeterminados anteriores sin tocar los que el médico cambió: Correcto.
 
+## Prematuros: INTERGROWTH-21st
+
+Ecuaciones del apéndice de Villar et al., *Lancet Glob Health* 2015;3:e681–91 (estándares de crecimiento posnatal para prematuros, 27 a 64 semanas de edad posmenstrual). Se usan antes de las 40 semanas de edad corregida; después, OMS con edad corregida.
+
+| Prueba (`testIntergrowth`) | Resultado |
+|---|---|
+| 1596 valores de las tablas oficiales publicadas (peso, longitud y perímetro cefálico; ambos sexos; Z −3 a +3; 27 a 64 semanas) reproducidos dentro del redondeo publicado (0.01 kg; 0.1 cm) | Correcto |
+| Ida y vuelta medida → Z → medida | Correcto |
+| Antes de 27 semanas posmenstruales no se calcula; desde 40 semanas corregidas pasa a OMS 2006 | Correcto |
+| Interpretación con los puntos de corte OMS 0–5 años; peso como indicador principal del resumen | Correcto |
+| Límites de plausibilidad, edema y gráfica de prematuros (27–40 semanas) | Correcto |
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).
-- Definir si se usarán curvas para prematuros (Fenton o INTERGROWTH-21st) antes de las 40 semanas de edad corregida.
-- Definir si se usarán referencias CDC en algún caso.
 - Síndrome de Down: confirmar el uso de la referencia general OMS para el IMC (el CDC remite a sus propias curvas generales) y revisar los textos de interpretación por percentil.

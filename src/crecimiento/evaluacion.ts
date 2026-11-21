@@ -5,11 +5,13 @@
 //   - Corrección |Z| > 3 en los indicadores basados en peso.
 // Síndrome de Down: curvas CDC (Zemel et al., Pediatrics 2015), ver evaluarDown().
 // Decisión clínica del proyecto: edad corregida para nacidos < 37 semanas hasta los 24 meses cronológicos.
+// Prematuros antes de las 40 semanas de edad corregida: INTERGROWTH-21st (ver evaluarIntergrowth()).
 
 import { calcularEdad, leerFechaISO } from '../domain/fechas';
 import { OMS2006 } from './datos/oms2006';
 import { OMS2007 } from './datos/oms2007';
 import { CDC_DOWN } from './datos/cdcDown';
+import { edadPosmenstrual, EPM_MINIMA, IndicadorIG, textoEPM, zIntergrowth } from './intergrowth';
 import {
   extremosPorSexo,
   lmsEnPunto,
@@ -106,10 +108,13 @@ export function evaluarCrecimiento(d: DatosEvaluacion): ResultadoEvaluacion | nu
     edadDias = edadDiasCronologica - (40 - d.semanasGestacion) * 7;
     base.usaEdadCorregida = true;
     if (edadDias < 0) {
-      notas.push(
-        'Aún no cumple 40 semanas de edad corregida: las curvas empiezan al término. Use curvas para prematuros.',
-      );
-      return base;
+      // Antes de las 40 semanas: estándares INTERGROWTH-21st para prematuros, por edad posmenstrual.
+      const epm = edadPosmenstrual(d.semanasGestacion, edadDiasCronologica);
+      if (epm < EPM_MINIMA) {
+        notas.push(`Edad posmenstrual de ${textoEPM(epm)}: los estándares INTERGROWTH-21st empiezan a las 27 semanas.`);
+        return base;
+      }
+      return evaluarIntergrowth(d, base, epm);
     }
     notas.push(`Edad corregida por prematuridad (${d.semanasGestacion} semanas al nacer).`);
   }
@@ -213,6 +218,63 @@ function evaluarOMS2007(d: DatosEvaluacion, r: ResultadoEvaluacion, edadMeses: n
   r.indicadores.push(resultado('pesoTalla', 'OMS2007', peso, null, true, 'Sin referencia OMS después de los 5 años; use IMC para la edad'));
   r.indicadores.push(resultado('imcEdad', 'OMS2007', imc, lmsInterpolado(OMS2007.imcEdad, s, inferior, fraccion), true, sinPeso));
   r.indicadores.push(resultado('pcEdad', 'OMS2007', d.perimetroCefalicoCm, null, false, 'Sin referencia OMS después de los 5 años'));
+  return r;
+}
+
+// ---------------------------------------------------------------------------
+// Prematuros antes de las 40 semanas de edad corregida: INTERGROWTH-21st (Villar et al., Lancet Glob Health 2015)
+// ---------------------------------------------------------------------------
+// - Peso, longitud y perímetro cefálico por edad posmenstrual (27 a 64 semanas); sin peso para la longitud ni IMC.
+// - La longitud se usa tal como se midió (acostado). Sin la corrección |Z| > 3 de la OMS.
+
+function resultadoIG(indicador: IndicadorIG, valor: number | null, d: DatosEvaluacion, epm: number, motivo?: string): ResultadoIndicador {
+  const referencia: Referencia = 'IG_PRETERM';
+  if (valor == null || valor <= 0) {
+    return { indicador, referencia, z: null, percentil: null, improbable: false, valorUsado: null, motivoNoCalculado: motivo ?? 'Falta el dato' };
+  }
+  const zSinRedondear = motivo ? null : zIntergrowth(indicador, d.sexo, epm, valor);
+  if (zSinRedondear == null) {
+    return { indicador, referencia, z: null, percentil: null, improbable: false, valorUsado: valor, motivoNoCalculado: motivo ?? 'Fuera del rango de la referencia' };
+  }
+  const z = redondear2(zSinRedondear);
+  const [min, max] = LIMITES[indicador];
+  return { indicador, referencia, z, percentil: percentilDeZ(zSinRedondear), improbable: z < min || z > max, valorUsado: valor };
+}
+
+function evaluarIntergrowth(d: DatosEvaluacion, r: ResultadoEvaluacion, epm: number): ResultadoEvaluacion {
+  r.referencia = 'IG_PRETERM';
+  r.semanasPosmenstruales = epm;
+  r.usaEdadCorregida = true;
+  const peso = d.pesoKg != null && d.pesoKg > 0 ? d.pesoKg : null;
+  const talla = d.tallaCm != null && d.tallaCm > 0 ? d.tallaCm : null;
+  r.tallaAjustadaCm = talla;
+  r.imc = null;
+  r.notas.push(
+    `Prematuro de ${d.semanasGestacion} semanas, con ${textoEPM(epm)} de edad posmenstrual: se usan los estándares INTERGROWTH-21st para prematuros hasta las 40 semanas; después, la OMS con edad corregida.`,
+  );
+  if (talla != null && d.tipoMedicion === 'de_pie') r.notas.push('A esta edad la longitud se mide acostado; se tomó tal como se registró.');
+  const sinPeso = d.edema ? MOTIVO_EDEMA : undefined;
+  r.indicadores.push(resultadoIG('pesoEdad', peso, d, epm, sinPeso));
+  r.indicadores.push(resultadoIG('tallaEdad', talla, d, epm));
+  r.indicadores.push({
+    indicador: 'pesoTalla',
+    referencia: 'IG_PRETERM',
+    z: null,
+    percentil: null,
+    improbable: false,
+    valorUsado: null,
+    motivoNoCalculado: 'INTERGROWTH-21st para prematuros no incluye peso para la longitud',
+  });
+  r.indicadores.push({
+    indicador: 'imcEdad',
+    referencia: 'IG_PRETERM',
+    z: null,
+    percentil: null,
+    improbable: false,
+    valorUsado: null,
+    motivoNoCalculado: 'Sin IMC antes de las 40 semanas de edad corregida',
+  });
+  r.indicadores.push(resultadoIG('pcEdad', d.perimetroCefalicoCm, d, epm));
   return r;
 }
 

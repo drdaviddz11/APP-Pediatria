@@ -23,13 +23,14 @@ export interface LMS {
 
 export type Indicador = 'pesoEdad' | 'tallaEdad' | 'pesoTalla' | 'imcEdad' | 'pcEdad';
 
-export type Referencia = 'OMS2006' | 'OMS2007' | 'SD036' | 'SD220';
+export type Referencia = 'OMS2006' | 'OMS2007' | 'SD036' | 'SD220' | 'IG_PRETERM';
 
 export const NOMBRE_REFERENCIA: Record<Referencia, string> = {
   OMS2006: 'Patrones de crecimiento OMS 2006 (0–5 años)',
   OMS2007: 'Referencia de crecimiento OMS 2007 (5–19 años)',
   SD036: 'Curvas CDC para síndrome de Down (0–36 meses)',
   SD220: 'Curvas CDC para síndrome de Down (2–20 años)',
+  IG_PRETERM: 'INTERGROWTH-21st para prematuros (edad posmenstrual)',
 };
 
 export function esReferenciaDown(r: Referencia | null): boolean {
@@ -80,6 +81,8 @@ export interface ResultadoEvaluacion {
   edadDiasUsada: number | null;
   edadMesesUsada: number | null;
   usaEdadCorregida: boolean;
+  /** Prematuros antes de las 40 semanas: edad posmenstrual en semanas exactas (INTERGROWTH-21st). */
+  semanasPosmenstruales?: number | null;
   referencia: Referencia | null;
   /** Talla con el ajuste OMS de ±0.7 cm según la posición de medición, si se aplicó. */
   tallaAjustadaCm: number | null;

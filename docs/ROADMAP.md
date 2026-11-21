@@ -26,7 +26,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Curvas CDC para síndrome de Down (Zemel 2015): evaluación, interpretación por percentil y gráficas.
 - [x] Revisión médica de interpretaciones y alertas (21 nov 2026: puntos de corte OMS 2006/2007, caída de Z de 1 punto, límites de plausibilidad y síndrome de Down aprobados).
 - [x] Decisión: solo OMS (sin CDC 2000); edad corregida hasta 24 meses en todos.
-- [ ] Curvas INTERGROWTH-21st para prematuros antes de las 40 semanas corregidas (decidido el 21 nov 2026).
+- [x] Curvas INTERGROWTH-21st para prematuros antes de las 40 semanas corregidas (decidido el 21 nov 2026): peso, longitud y perímetro cefálico por edad posmenstrual, con gráfica de 27 a 40 semanas.
 
 ## Fase 3 — Panel principal y agenda
 

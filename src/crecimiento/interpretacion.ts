@@ -1,6 +1,7 @@
 // Interpretación de puntajes Z con los puntos de corte de la OMS.
 //   0–5 años: WHO Child Growth Standards, Training Course on Child Growth Assessment (2008).
 //   5–19 años: WHO Growth Reference 2007 (de Onis et al., Bull WHO 2007).
+//   Prematuros antes de las 40 semanas (INTERGROWTH-21st): mismos puntos de corte que la OMS 0–5 años.
 //   Síndrome de Down: las curvas CDC (Zemel 2015) describen el crecimiento de niños con SD y no
 //   definen puntos de corte de desnutrición; se describe la posición por percentil.
 // Es apoyo a la decisión clínica: siempre requiere la valoración del médico.
@@ -44,7 +45,7 @@ function interpretarDown(indicador: Indicador, z: number): Interpretacion {
 
 export function interpretar(indicador: Indicador, referencia: Referencia, z: number): Interpretacion {
   if (esReferenciaDown(referencia)) return interpretarDown(indicador, z);
-  if (referencia === 'OMS2006') {
+  if (referencia === 'OMS2006' || referencia === 'IG_PRETERM') {
     switch (indicador) {
       case 'tallaEdad':
         return porCorte(
@@ -62,7 +63,7 @@ export function interpretar(indicador: Indicador, referencia: Referencia, z: num
           [
             [-3, 'Bajo peso severo', 'grave'],
             [-2, 'Bajo peso', 'alerta'],
-            [1, 'Peso alto para la edad: valorar con peso para la talla o IMC', 'vigilar'],
+            [1, referencia === 'IG_PRETERM' ? 'Peso alto para la edad posmenstrual' : 'Peso alto para la edad: valorar con peso para la talla o IMC', 'vigilar'],
           ],
           NORMAL('Peso adecuado para la edad'),
         );
@@ -152,7 +153,11 @@ export function resumenNutricional(e: ResultadoEvaluacion): { texto: string; niv
   const resumen: { texto: string; nivel: Nivel; sustento: string }[] = [];
   const buscar = (i: Indicador) => e.indicadores.find((x) => x.indicador === i && x.z != null);
   const principal =
-    e.referencia === 'OMS2006' || e.referencia === 'SD036' ? buscar('pesoTalla') ?? buscar('imcEdad') : buscar('imcEdad');
+    e.referencia === 'IG_PRETERM'
+      ? buscar('pesoEdad')
+      : e.referencia === 'OMS2006' || e.referencia === 'SD036'
+        ? buscar('pesoTalla') ?? buscar('imcEdad')
+        : buscar('imcEdad');
   const talla = buscar('tallaEdad');
   for (const r of [principal, talla]) {
     if (!r) continue;

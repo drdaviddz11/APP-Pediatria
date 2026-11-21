@@ -4,14 +4,16 @@ import type { SexoReferencia } from '../domain/types';
 import { OMS2006 } from './datos/oms2006';
 import { OMS2007 } from './datos/oms2007';
 import { CDC_DOWN } from './datos/cdcDown';
+import { EPM_LIMITE_USO, EPM_MINIMA, valorDeZ } from './intergrowth';
 import { DIAS_POR_MES } from './evaluacion';
 import { extremosPorSexo, lmsEnIndice, tamanoTabla, valorEnZ, zDePercentil } from './lms';
 import type { Indicador, Referencia, ResultadoEvaluacion, TablaLMS, TablaLMSPorSexo } from './tipos';
 
-export type Rango = '0-2' | '2-5' | '5-19' | 'sd-0-3' | 'sd-2-20';
+export type Rango = 'prematuro' | '0-2' | '2-5' | '5-19' | 'sd-0-3' | 'sd-2-20';
 export type Escala = 'z' | 'percentil';
 
 export const NOMBRE_RANGO: Record<Rango, string> = {
+  prematuro: 'Prematuro (27–40 sem)',
   '0-2': '0–2 años',
   '2-5': '2–5 años',
   '5-19': '5–19 años',
@@ -20,11 +22,14 @@ export const NOMBRE_RANGO: Record<Rango, string> = {
 };
 
 /** Rangos de edad de las gráficas según la población de referencia del paciente. */
-export function rangosDisponibles(sindromeDown: boolean): Rango[] {
-  return sindromeDown ? ['sd-0-3', 'sd-2-20'] : ['0-2', '2-5', '5-19'];
+export function rangosDisponibles(sindromeDown: boolean, semanasGestacion: number | null = null): Rango[] {
+  const generales: Rango[] = sindromeDown ? ['sd-0-3', 'sd-2-20'] : ['0-2', '2-5', '5-19'];
+  // Prematuros (< 37 semanas): también la gráfica INTERGROWTH-21st antes de las 40 semanas.
+  return semanasGestacion != null && semanasGestacion < 37 ? ['prematuro', ...generales] : generales;
 }
 
 const REFERENCIA_RANGO: Record<Rango, Referencia> = {
+  prematuro: 'IG_PRETERM',
   '0-2': 'OMS2006',
   '2-5': 'OMS2006',
   '5-19': 'OMS2007',
@@ -194,6 +199,7 @@ export function configurarGrafica(indicador: Indicador, sexo: SexoReferencia, ra
   });
 
   if (rango === 'sd-0-3' || rango === 'sd-2-20') return configurarDown(indicador, sexo, rango, escala, noDisponible);
+  if (rango === 'prematuro') return configurarPrematuro(indicador, sexo, escala, noDisponible);
 
   if (indicador === 'pesoTalla') {
     if (rango === '5-19') return noDisponible('La OMS no tiene referencia de peso para la talla después de los 5 años. Use IMC para la edad.');
@@ -235,6 +241,29 @@ export function configurarGrafica(indicador: Indicador, sexo: SexoReferencia, ra
   };
 }
 
+/** INTERGROWTH-21st para prematuros: de 27 a 40 semanas de edad posmenstrual. */
+function configurarPrematuro(indicador: Indicador, sexo: SexoReferencia, escala: Escala, noDisponible: (m: string) => ConfigGrafica): ConfigGrafica {
+  if (indicador === 'pesoTalla' || indicador === 'imcEdad') {
+    return noDisponible('INTERGROWTH-21st para prematuros tiene peso, longitud y perímetro cefálico por edad posmenstrual.');
+  }
+  const valores = escala === 'z' ? LINEAS_Z : LINEAS_PERCENTIL;
+  const lineasIG: LineaReferencia[] = valores.map((v) => {
+    const z = escala === 'z' ? v : zDePercentil(v);
+    const puntos: { x: number; y: number }[] = [];
+    for (let semanas = EPM_MINIMA; semanas <= EPM_LIMITE_USO + 1e-9; semanas += 0.25) {
+      const y = valorDeZ(indicador, sexo, semanas, z);
+      if (y != null) puntos.push({ x: semanas, y });
+    }
+    return { etiqueta: escala === 'z' ? (v > 0 ? `+${v}` : String(v)) : `P${v}`, tipo: escala === 'z' ? tipoZ(v) : tipoPercentil(v), puntos };
+  });
+  return {
+    disponible: true,
+    ejeX: { titulo: 'Edad posmenstrual (semanas)', min: EPM_MINIMA, max: EPM_LIMITE_USO, marcas: marcasCada(28, EPM_LIMITE_USO, 2), textoMarca: (x) => `${x}` },
+    unidadY: indicador === 'pesoEdad' ? 'kg' : 'cm',
+    lineas: lineasIG,
+  };
+}
+
 /** Rango que corresponde a una edad en meses. */
 export function rangoParaEdad(meses: number, sindromeDown = false): Rango {
   if (sindromeDown) return meses < 36 ? 'sd-0-3' : 'sd-2-20';
@@ -258,6 +287,12 @@ export function puntosPaciente(
 ): PuntoPaciente[] {
   const puntos: PuntoPaciente[] = [];
   for (const { fecha, e } of evaluaciones) {
+    if (rango === 'prematuro') {
+      const r = e.indicadores.find((i) => i.indicador === indicador);
+      if (e.semanasPosmenstruales == null || !r || r.referencia !== 'IG_PRETERM' || r.valorUsado == null || r.z == null) continue;
+      puntos.push({ x: e.semanasPosmenstruales, y: r.valorUsado, z: r.z, fecha });
+      continue;
+    }
     if (e.edadMesesUsada == null) continue;
     const r = e.indicadores.find((i) => i.indicador === indicador);
     if (!r || r.valorUsado == null || r.z == null) continue;
