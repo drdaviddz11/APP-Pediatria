@@ -215,6 +215,17 @@ Pruebas automáticas (`testSeguridad`) con SQLite real:
 | La clave es de cada equipo: no se sincroniza ni entra en los respaldos | Correcto |
 | Bloqueo por inactividad (toques, teclado y escritura en los campos) y al volver de otra app o pestaña | Revisado en el código; falta probarlo en el teléfono y la computadora |
 
+## Revisión de seguridad y privacidad (21 nov 2026)
+
+Informe completo en el documento "Revisión de seguridad y privacidad de PediaControl Pro". Doce hallazgos; corregidos en el código:
+
+- Clave de acceso y bloqueo automático (antes no existía).
+- Exportación CSV de la caja: sin nombres de pacientes salvo que se pidan, con aviso (prueba en `testCaja`).
+
+Pasos del médico antes de usar datos reales: clave en cada equipo; contraseña, bloqueo de pantalla y FileVault en la Mac; código en el iPhone; desactivar el registro de cuentas nuevas en Supabase; prueba de recuperación de un respaldo.
+
+Pendientes técnicos: política de seguridad de contenido (CSP) cuando se pueda probar; Face ID en la app propia.
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

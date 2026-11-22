@@ -9,7 +9,7 @@ import { exportarMesCsv, leerAjustesCaja, ResumenMes, resumenDelMes } from '../.
 import { guardarArchivo } from '../../src/respaldo/archivos';
 import { useFocusEffectConSync } from '../../src/sincronizacion/eventos';
 import { BotonFlecha } from '../../src/ui/agenda';
-import { Boton, Cargando, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
+import { Boton, Cargando, Interruptor, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
 import { Alert } from '../../src/ui/dialogo';
 import { EN_COMPUTADORA } from '../../src/ui/plataforma';
 import { colores, espacio, radio, texto } from '../../src/ui/tema';
@@ -20,6 +20,7 @@ export default function ResumenDelMes() {
   const [mes, setMes] = useState(params.mes && /^\d{4}-\d{2}$/.test(params.mes) ? params.mes : diaLocal(new Date()).slice(0, 7));
   const [datos, setDatos] = useState<{ r: ResumenMes; moneda: string } | null>(null);
   const [exportando, setExportando] = useState(false);
+  const [conNombres, setConNombres] = useState(false);
 
   const cargar = useCallback(() => {
     let vigente = true;
@@ -37,7 +38,7 @@ export default function ResumenDelMes() {
   async function exportar() {
     setExportando(true);
     try {
-      const csv = await exportarMesCsv(db, mes);
+      const csv = await exportarMesCsv(db, mes, { conNombres });
       await guardarArchivo(`Ingresos_${mes}.csv`, csv, { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text', titulo: 'Ingresos del mes' });
     } catch (e) {
       Alert.alert('No se pudo exportar', e instanceof Error ? e.message : String(e));
@@ -88,10 +89,17 @@ export default function ResumenDelMes() {
         )}
       </Seccion>
 
+      <Interruptor etiqueta="Incluir nombres de pacientes" valor={conNombres} alCambiar={setConNombres} />
+      {conNombres && (
+        <Text style={[estilos.suave, { color: colores.peligro, marginBottom: espacio.s }]}>
+          El archivo no lleva contraseña: guárdelo en un lugar seguro y bórrelo cuando ya no lo necesite. Su contador normalmente no
+          necesita los nombres.
+        </Text>
+      )}
       <Boton texto={exportando ? 'Preparando…' : 'Exportar el mes (Excel / CSV)'} onPress={() => void exportar()} deshabilitado={exportando} />
       <Text style={[estilos.suave, { fontSize: texto.mini, marginTop: espacio.s }]}>
         {EN_COMPUTADORA
-          ? 'El archivo se descarga en la carpeta Descargas y se abre con Excel, Numbers o Google Sheets. Incluye cada cobro con hora, paciente, concepto, forma de pago y anulaciones.'
+          ? 'El archivo se descarga en la carpeta Descargas y se abre con Excel, Numbers o Google Sheets. Incluye cada cobro con hora, concepto, forma de pago y anulaciones (y el paciente, si lo pidió).'
           : 'Puede enviarlo por correo a su contador o guardarlo en Archivos/Drive. Se abre con Excel, Numbers o Google Sheets.'}
       </Text>
     </PantallaFormulario>

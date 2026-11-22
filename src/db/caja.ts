@@ -343,13 +343,17 @@ export async function resumenDelMes(db: SQLiteDatabase, mes: string): Promise<Re
 }
 
 /** CSV con todos los cobros del mes (incluye los anulados, marcados). */
-export async function exportarMesCsv(db: SQLiteDatabase, mes: string): Promise<string> {
+/**
+ * CSV del mes para la contabilidad. Por privacidad, sin nombres de pacientes salvo que se pidan
+ * (el archivo no lleva contraseña).
+ */
+export async function exportarMesCsv(db: SQLiteDatabase, mes: string, opciones: { conNombres?: boolean } = {}): Promise<string> {
   const cobros = (await db.getAllAsync<FilaCobro>(`${SELECT_COBRO} WHERE c.dia LIKE ? ORDER BY c.fecha`, `${mes}-%`)).map(aCobro);
   return csvCobros(
     cobros.map((c) => ({
       fecha: c.fecha,
       dia: c.dia,
-      paciente: c.pacienteNombre ?? '',
+      paciente: opciones.conNombres ? c.pacienteNombre ?? '' : '',
       concepto: c.concepto,
       montoCentavos: c.montoCentavos,
       forma: c.forma,
