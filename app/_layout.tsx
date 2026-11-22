@@ -9,11 +9,12 @@ import { BloqueoProvider } from '../src/seguridad/BloqueoProvider';
 import { SincronizacionAutomatica } from '../src/sincronizacion/automatica';
 import { Cargando } from '../src/ui/componentes';
 import { AnfitrionDialogos } from '../src/ui/dialogo';
-import { estadoDelNavegador, pedirAlmacenamientoPersistente, prepararNavegador } from '../src/ui/plataforma';
+import { estadoDelNavegador, pedirAlmacenamientoPersistente, prepararInstalacion, prepararNavegador } from '../src/ui/plataforma';
 import { colores, espacio, texto } from '../src/ui/tema';
 
 export default function Raiz() {
   useEffect(pedirAlmacenamientoPersistente, []);
+  useEffect(prepararInstalacion, []);
 
   // En la computadora: la primera vez se prepara el navegador (se recarga solo); si no se puede, se explica qué hacer.
   const [navegador, setNavegador] = useState(estadoDelNavegador);

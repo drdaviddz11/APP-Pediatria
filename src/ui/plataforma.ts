@@ -4,8 +4,12 @@ import { Platform } from 'react-native';
 
 export const EN_COMPUTADORA = Platform.OS === 'web';
 
+/** Versión web abierta en un teléfono o tableta (por ejemplo, Safari en el iPhone). */
+export const WEB_EN_TELEFONO =
+  EN_COMPUTADORA && /iPhone|iPad|iPod|Android/i.test((globalThis as { navigator?: { userAgent?: string } }).navigator?.userAgent ?? '');
+
 /** Cómo llamar al equipo donde se guardan los datos, para los textos de la app. */
-export const ESTE_EQUIPO = EN_COMPUTADORA ? 'Esta computadora' : 'Este teléfono';
+export const ESTE_EQUIPO = EN_COMPUTADORA && !WEB_EN_TELEFONO ? 'Esta computadora' : 'Este teléfono';
 
 type Global = {
   crossOriginIsolated?: boolean;
@@ -42,7 +46,7 @@ export function estadoDelNavegador(): 'listo' | 'preparar' | string {
     intentos = 0;
   }
   if (g.navigator?.serviceWorker && intentos < 2) return 'preparar';
-  return 'Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge y recargue la página.';
+  return 'Este navegador no pudo preparar la base de datos de la app. En la computadora, ábrala en Google Chrome o Microsoft Edge y recargue la página.';
 }
 
 /** Activa el service worker que agrega los encabezados de aislamiento y recarga la página (como máximo dos veces). */
@@ -70,4 +74,28 @@ export function pedirAlmacenamientoPersistente(): void {
   if (!EN_COMPUTADORA) return;
   const nav = (globalThis as { navigator?: { storage?: { persist?: () => Promise<boolean> } } }).navigator;
   void nav?.storage?.persist?.().catch(() => undefined);
+}
+
+/**
+ * Para instalar la versión web como app (iPhone: Compartir → Agregar a pantalla de inicio): ícono, nombre y
+ * pantalla completa. Instalada así, tiene su propio almacenamiento, que Safari no borra por falta de uso.
+ */
+export function prepararInstalacion(): void {
+  if (!EN_COMPUTADORA) return;
+  const doc = (globalThis as { document?: Document }).document;
+  if (!doc || doc.querySelector('link[rel="manifest"]')) return;
+  const base = (process.env.EXPO_PUBLIC_BASE_URL ?? '').replace(/\/+$/, '');
+  const agregar = (etiqueta: 'link' | 'meta', atributos: Record<string, string>) => {
+    const el = doc.createElement(etiqueta);
+    for (const [k, v] of Object.entries(atributos)) el.setAttribute(k, v);
+    doc.head.appendChild(el);
+  };
+  agregar('link', { rel: 'manifest', href: `${base}/manifest.webmanifest` });
+  agregar('link', { rel: 'apple-touch-icon', href: `${base}/iconos/icono-180.png` });
+  agregar('link', { rel: 'icon', type: 'image/png', href: `${base}/iconos/icono-192.png` });
+  agregar('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
+  agregar('meta', { name: 'mobile-web-app-capable', content: 'yes' });
+  agregar('meta', { name: 'apple-mobile-web-app-title', content: 'PediaControl' });
+  agregar('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'default' });
+  agregar('meta', { name: 'theme-color', content: '#0E7C86' });
 }
