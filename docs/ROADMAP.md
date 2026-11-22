@@ -126,6 +126,8 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 
 ## Fase 8 — Publicación y venta
 
+> **En pausa (21 nov 2026):** el médico decidió usar la app solo para su consulta, sin publicarla en la App Store por ahora. La división Gratis/Pro se queda en el código (su edición siempre es Pro).
+
 Decisiones del médico (18 nov 2026): versión Gratis y Pro (Pro = recetas y WhatsApp), cobro por suscripción mensual/anual;
 la cuenta de Google se conecta solo para respaldos (la app abre sin cuenta, así no se exige "Entrar con Apple").
 
