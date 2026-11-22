@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Alert } from './dialogo';
-import { EN_COMPUTADORA } from './plataforma';
+import { EN_COMPUTADORA, WEB_EN_TELEFONO } from './plataforma';
 import { enlaceWhatsApp, enlaceWhatsAppWeb, TipoMensaje } from '../seguimiento/mensajes';
 import { Boton, EnlaceTexto, Seccion, estilos } from './componentes';
 import { colores, espacio, radio, texto } from './tema';
@@ -13,6 +13,12 @@ import { marcarActividad } from '../seguridad/actividad';
 
 /** Abre WhatsApp con el mensaje escrito. Devuelve false si no se pudo. */
 export async function abrirWhatsApp(numero: string, mensaje: string): Promise<boolean> {
+  if (WEB_EN_TELEFONO) {
+    // Versión web en el teléfono: el enlace oficial wa.me abre la app de WhatsApp.
+    const ventana = window.open(enlaceWhatsApp(numero, mensaje), '_blank');
+    if (!ventana) window.location.assign(enlaceWhatsApp(numero, mensaje));
+    return true;
+  }
   if (EN_COMPUTADORA) {
     // Siempre en la misma pestaña de WhatsApp Web, para no llenar el navegador de pestañas al enviar varios.
     const ventana = window.open(enlaceWhatsAppWeb(numero, mensaje), 'pediacontrol-whatsapp');
@@ -88,7 +94,7 @@ export function EnvioEnLote({
     <View>
       <Seccion titulo={`Enviar mensajes (${hechos} de ${mensajes.length})`}>
         <Text style={[estilos.suave, { marginBottom: espacio.s }]}>
-          {EN_COMPUTADORA
+          {EN_COMPUTADORA && !WEB_EN_TELEFONO
             ? 'Cada clic abre WhatsApp Web (en la misma pestaña) con el mensaje ya escrito. Revíselo, presione Enviar y regrese a esta pestaña para el siguiente.'
             : 'Cada toque abre WhatsApp con el mensaje ya escrito. Revíselo, toque Enviar y regrese a esta app para el siguiente.'}
         </Text>
