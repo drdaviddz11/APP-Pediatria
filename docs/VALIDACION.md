@@ -201,6 +201,20 @@ Ecuaciones del apéndice de Villar et al., *Lancet Glob Health* 2015;3:e681–91
 | Interpretación con los puntos de corte OMS 0–5 años; peso como indicador principal del resumen | Correcto |
 | Límites de plausibilidad, edema y gráfica de prematuros (27–40 semanas) | Correcto |
 
+## Clave de acceso y bloqueo
+
+Pruebas automáticas (`testSeguridad`) con SQLite real:
+
+| Prueba | Resultado |
+|---|---|
+| Clave de 4 a 8 números; rechaza claves obvias (1234, 0000, repetidas) | Correcto |
+| Se guarda solo la huella (PBKDF2-SHA256, 120 000 iteraciones, sal aleatoria); nunca la clave | Correcto |
+| 5 errores sin espera; luego 30 s, 1, 2, 4, 8 min, máximo 15 min; durante la espera ni la clave correcta entra; la cuenta sobrevive a recargar la página | Correcto |
+| Intentos fallidos repetidos quedan en la bitácora | Correcto |
+| Cambiar o quitar la clave pide la actual | Revisado en el código |
+| La clave es de cada equipo: no se sincroniza ni entra en los respaldos | Correcto |
+| Bloqueo por inactividad (toques, teclado y escritura en los campos) y al volver de otra app o pestaña | Revisado en el código; falta probarlo en el teléfono y la computadora |
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

@@ -107,7 +107,8 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Respaldo manual cifrado con contraseña (PBKDF2-SHA256 310 000 iteraciones + AES-256-GCM), guardado en iCloud Drive, Google Drive o la computadora, y restauración completa con verificación. Adelantado a petición del médico.
 - [ ] Respaldo automático en el servidor.
 - [ ] Cifrado en tránsito y en reposo, bitácora de accesos.
-- [ ] Cierre de sesión automático y bloqueo con Face ID.
+- [x] Clave de acceso por equipo y bloqueo automático por inactividad (21 nov 2026).
+- [ ] Face ID en la app propia del teléfono (código listo; Expo Go no lo permite).
 - [ ] Exportación segura del expediente.
 - [ ] Políticas de conservación y eliminación.
 - [ ] Revisión de obligaciones legales en Honduras y requisitos de Apple, Google y Meta.

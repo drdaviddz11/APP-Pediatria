@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Problema } from '../domain/validacion';
 import { ANCHO_MAXIMO, colores, espacio, radio, texto } from './tema';
+import { marcarActividad } from '../seguridad/actividad';
 
 /** Pantalla con desplazamiento que no queda tapada por el teclado. */
 export function PantallaFormulario({ children }: { children: ReactNode }) {
@@ -64,7 +65,7 @@ interface CampoProps extends TextInputProps {
   unidad?: string;
 }
 
-export function Campo({ etiqueta, ayuda, problema, unidad, multiline, style, ...resto }: CampoProps) {
+export function Campo({ etiqueta, ayuda, problema, unidad, multiline, style, onChangeText, ...resto }: CampoProps) {
   const colorBorde = problema ? (problema.nivel === 'error' ? colores.peligro : colores.aviso) : colores.borde;
   return (
     <View style={estilos.campo}>
@@ -75,6 +76,10 @@ export function Campo({ etiqueta, ayuda, problema, unidad, multiline, style, ...
           placeholderTextColor="#98A6B0"
           multiline={multiline}
           textAlignVertical={multiline ? 'top' : 'center'}
+          onChangeText={(v: string) => {
+            marcarActividad();
+            onChangeText?.(v);
+          }}
           {...resto}
         />
         {unidad ? <Text style={estilos.unidad}>{unidad}</Text> : null}

@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { migrarBaseDeDatos } from '../src/db/esquema';
 import { PlanProvider } from '../src/plan/PlanProvider';
+import { BloqueoProvider } from '../src/seguridad/BloqueoProvider';
 import { SincronizacionAutomatica } from '../src/sincronizacion/automatica';
 import { Cargando } from '../src/ui/componentes';
 import { AnfitrionDialogos } from '../src/ui/dialogo';
@@ -37,6 +38,7 @@ export default function Raiz() {
     <Suspense fallback={<Cargando />}>
       <SQLiteProvider databaseName="pediacontrol.db" onInit={migrarBaseDeDatos} useSuspense>
         <StatusBar style="dark" />
+        <BloqueoProvider>
         <PlanProvider>
         <Stack
           screenOptions={{
@@ -73,6 +75,7 @@ export default function Raiz() {
           <Stack.Screen name="constancias/[id]" options={{ title: 'Constancia' }} />
           <Stack.Screen name="firma" options={{ title: 'Firma y sello' }} />
           <Stack.Screen name="cumpleanos" options={{ title: 'Cumpleaños' }} />
+          <Stack.Screen name="seguridad" options={{ title: 'Clave y bloqueo' }} />
           <Stack.Screen name="google" options={{ title: 'Conectando con Google…' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
@@ -83,6 +86,7 @@ export default function Raiz() {
           <Stack.Screen name="consultas/[id]" options={{ title: 'Consulta' }} />
         </Stack>
         </PlanProvider>
+        </BloqueoProvider>
         <SincronizacionAutomatica />
         <AnfitrionDialogos />
       </SQLiteProvider>

@@ -449,6 +449,15 @@ export const MIGRACIONES: string[] = [
   );
   ` +
     sqlTriggersCaptura(TABLAS_SYNC.slice(15, 16)),
+
+  // Versión 12: ajustes que pertenecen solo a este equipo (clave de acceso y bloqueo).
+  // No se sincronizan ni entran en los respaldos.
+  `
+  CREATE TABLE ajustes_locales (
+    clave TEXT PRIMARY KEY NOT NULL,
+    valor TEXT NOT NULL
+  );
+  `,
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

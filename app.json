@@ -16,7 +16,11 @@
     "web": {
       "output": "single"
     },
-    "plugins": ["expo-router", "expo-sqlite"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      ["expo-local-authentication", { "faceIDPermission": "PediaControl Pro usa Face ID para abrir la app sin escribir su clave." }]
+    ],
     "experiments": {
       "typedRoutes": false
     }

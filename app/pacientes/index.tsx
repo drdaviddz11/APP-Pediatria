@@ -12,6 +12,7 @@ import { cargarPacientesDemo } from '../../src/db/demo';
 import { edadDesdeISO, textoFechaHora } from '../../src/domain/fechas';
 import { Aviso, Boton, EnlaceTexto, estilos } from '../../src/ui/componentes';
 import { ANCHO_MAXIMO, colores, espacio, radio, texto } from '../../src/ui/tema';
+import { marcarActividad } from '../../src/seguridad/actividad';
 
 export default function Pacientes() {
   const { seleccionar } = useLocalSearchParams<{ seleccionar?: string }>();
@@ -68,7 +69,10 @@ export default function Pacientes() {
         <TextInput
           style={s.buscador}
           value={busqueda}
-          onChangeText={setBusqueda}
+          onChangeText={(v) => {
+            marcarActividad();
+            setBusqueda(v);
+          }}
           placeholder="Buscar por nombre, expediente o teléfono"
           placeholderTextColor="#98A6B0"
           clearButtonMode="while-editing"

@@ -149,6 +149,7 @@ export default function Configuracion() {
       <Boton texto="Mensajes de WhatsApp y criterios de control" variante="secundario" onPress={() => router.push('/configuracion-mensajes')} />
       <Boton texto="Respaldo de los datos" variante="secundario" onPress={() => router.push('/respaldo')} />
       <Boton texto="Sincronización entre equipos" variante="secundario" onPress={() => router.push('/sincronizacion')} />
+      <Boton texto="Clave de acceso y bloqueo" variante="secundario" onPress={() => router.push('/seguridad')} />
       <Boton texto="Firma y sello (constancias)" variante="secundario" onPress={() => router.push('/firma')} />
       <Boton texto="Versión Gratis y Pro" variante="secundario" onPress={() => router.push('/plan')} />
     </PantallaFormulario>

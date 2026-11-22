@@ -11,6 +11,7 @@ import { citasEntre, citasPorEstado } from '../src/db/agenda';
 import { buscarPacientes, ResumenPaciente } from '../src/db/pacientes';
 import { contarControlesPendientes } from '../src/db/seguimiento';
 import { resumenCumpleanosHoy } from '../src/db/cumpleanos';
+import { useBloqueo } from '../src/seguridad/BloqueoProvider';
 import { diasDesde, leerInfoRespaldo, resumenActual } from '../src/db/respaldo';
 import { edadDesdeISO } from '../src/domain/fechas';
 import { FilaCita } from '../src/ui/agenda';
@@ -19,6 +20,7 @@ import { colores, espacio, radio, texto } from '../src/ui/tema';
 import { IndicadorSync } from '../src/sincronizacion/IndicadorSync';
 import { textoDinero } from '../src/caja/dinero';
 import { diasSinCerrar, leerAjustesCaja, totalDeHoy } from '../src/db/caja';
+import { marcarActividad } from '../src/seguridad/actividad';
 
 interface Datos {
   hoy: Cita[];
@@ -50,6 +52,7 @@ const ACCESOS: { texto: string; icono: string; ruta: Href }[] = [
 
 export default function Panel() {
   const db = useSQLiteContext();
+  const { ajustes: bloqueo, bloquearAhora } = useBloqueo();
   const [datos, setDatos] = useState<Datos | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [encontrados, setEncontrados] = useState<ResumenPaciente[]>([]);
@@ -119,12 +122,29 @@ export default function Panel() {
 
   return (
     <PantallaSimple>
-      <Stack.Screen options={{ title: 'PediaControl Pro' }} />
+      <Stack.Screen
+        options={{
+          title: 'PediaControl Pro',
+          headerRight: bloqueo?.clave
+            ? () => (
+                <Pressable onPress={bloquearAhora} accessibilityRole="button" accessibilityLabel="Bloquear la app" hitSlop={10}>
+                  <Text style={s.bloquear}>🔒 Bloquear</Text>
+                </Pressable>
+              )
+            : undefined,
+        }}
+      />
       <Text style={s.fecha}>Hoy, {textoFechaLarga(hoy, false)}</Text>
 
       <Aviso>Versión de desarrollo: use solo pacientes ficticios.</Aviso>
 
       <IndicadorSync />
+
+      {bloqueo && !bloqueo.clave && (
+        <Pressable onPress={() => router.push('/seguridad')} style={({ pressed }) => [s.avisoRespaldo, pressed && { opacity: 0.8 }]}>
+          <Text style={s.avisoRespaldoTexto}>🔒 Proteja la app con una clave de acceso ›</Text>
+        </Pressable>
+      )}
 
       {datos?.hayPacientes && (datos.diasRespaldo === null || datos.diasRespaldo > 7) && (
         <Pressable onPress={() => router.push('/respaldo')} style={({ pressed }) => [s.avisoRespaldo, pressed && { opacity: 0.8 }]}>
@@ -198,7 +218,10 @@ export default function Panel() {
         <TextInput
           style={s.buscador}
           value={busqueda}
-          onChangeText={buscar}
+          onChangeText={(v) => {
+            marcarActividad();
+            void buscar(v);
+          }}
           placeholder="Abrir expediente: nombre, expediente o teléfono"
           placeholderTextColor="#98A6B0"
           autoCorrect={false}
@@ -280,6 +303,7 @@ export default function Panel() {
 }
 
 const s = StyleSheet.create({
+  bloquear: { color: colores.primario, fontWeight: '700', fontSize: texto.pequeno, paddingHorizontal: 8 },
   fecha: { fontSize: texto.titulo, fontWeight: '800', color: colores.texto, marginBottom: espacio.m },
   avisoRespaldo: {
     backgroundColor: colores.peligroSuave,

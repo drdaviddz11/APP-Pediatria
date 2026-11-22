@@ -9,6 +9,7 @@ import { EN_COMPUTADORA } from './plataforma';
 import { enlaceWhatsApp, enlaceWhatsAppWeb, TipoMensaje } from '../seguimiento/mensajes';
 import { Boton, EnlaceTexto, Seccion, estilos } from './componentes';
 import { colores, espacio, radio, texto } from './tema';
+import { marcarActividad } from '../seguridad/actividad';
 
 /** Abre WhatsApp con el mensaje escrito. Devuelve false si no se pudo. */
 export async function abrirWhatsApp(numero: string, mensaje: string): Promise<boolean> {
@@ -120,7 +121,10 @@ export function EnvioEnLote({
                   style={s.editor}
                   multiline
                   value={textos[m.clave]}
-                  onChangeText={(v) => setTextos((prev) => ({ ...prev, [m.clave]: v }))}
+                  onChangeText={(v) => {
+                    marcarActividad();
+                    setTextos((prev) => ({ ...prev, [m.clave]: v }));
+                  }}
                 />
               ) : (
                 <Text style={s.texto}>{textos[m.clave]}</Text>
