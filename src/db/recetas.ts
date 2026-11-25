@@ -127,6 +127,18 @@ function validarFavorito(texto: string): string {
   return t;
 }
 
+/** Indicaciones de la receta que todavía no están en favoritos (para ofrecer guardarlas). */
+export function indicacionesSinFavorito(indicaciones: string[], favoritos: { texto: string }[]): string[] {
+  const ya = new Set(favoritos.map((f) => normalizar(f.texto)));
+  const vistas = new Set<string>();
+  return limpiarIndicaciones(indicaciones).filter((t) => {
+    const n = normalizar(t);
+    if (!n || ya.has(n) || vistas.has(n) || t.length > LARGO_MAXIMO_INDICACION) return false;
+    vistas.add(n);
+    return true;
+  });
+}
+
 /** Guarda una indicación como favorita. Si ya existe igual, devuelve la existente. */
 export async function crearFavorito(db: SQLiteDatabase, texto: string): Promise<string> {
   const t = validarFavorito(texto);

@@ -12,7 +12,7 @@ import { resumenNutricional } from '../../../src/crecimiento/interpretacion';
 import { agregarNota, corregirVisita, crearVisita, listarConsultas, listarNotas, puedeCorregirVisita, VisitaEntrada } from '../../../src/db/consultas';
 import { vincularConsulta } from '../../../src/db/agenda';
 import { corregirDatosBasicos, obtenerPaciente } from '../../../src/db/pacientes';
-import { crearReceta, listarFavoritos, PESO_MAXIMO, PESO_MINIMO, Receta, recetasDePaciente, usarFavorito, validarIndicaciones } from '../../../src/db/recetas';
+import { crearFavorito, crearReceta, indicacionesSinFavorito, listarFavoritos, PESO_MAXIMO, PESO_MINIMO, Receta, recetasDePaciente, usarFavorito, validarIndicaciones } from '../../../src/db/recetas';
 import { calcularEdad, deDate, leerFechaISO, textoEdad } from '../../../src/domain/fechas';
 import type { Consulta, NotaAclaratoria, Paciente } from '../../../src/domain/types';
 import { leerNumero } from '../../../src/domain/validacion';
@@ -99,6 +99,9 @@ export default function Expediente() {
   const { id, citaId } = useLocalSearchParams<{ id: string; citaId?: string }>();
   const [datos, setDatos] = useState<Datos | null>(null);
   const [favoritos, setFavoritos] = useState<{ id: string; texto: string }[]>([]);
+  const recargarFavoritos = useCallback(() => {
+    void listarFavoritos(db).then((favs) => setFavoritos(favs.map((f) => ({ id: f.id, texto: f.texto }))));
+  }, [db]);
   const desplazar = useRef<ComponentRef<typeof ScrollView>>(null);
   const yaBajo = useRef(false);
 
@@ -118,7 +121,7 @@ export default function Expediente() {
       }
       if (!vigente) return;
       setDatos({ paciente, visitas, recetas: porVisita, notas });
-      setFavoritos(favs.slice(0, 12).map((f) => ({ id: f.id, texto: f.texto })));
+      setFavoritos(favs.map((f) => ({ id: f.id, texto: f.texto })));
     })();
     return () => {
       vigente = false;
@@ -163,6 +166,7 @@ export default function Expediente() {
               notas={datos.notas.get(v.id) ?? []}
               edadMeses={edadMeses}
               favoritos={favoritos}
+              alCambiarFavoritos={recargarFavoritos}
               alCambiar={cargar}
             />
           ))
@@ -172,6 +176,7 @@ export default function Expediente() {
           paciente={p}
           edadMeses={edadMeses}
           favoritos={favoritos}
+          alCambiarFavoritos={recargarFavoritos}
           citaId={citaId}
           alGuardar={() => {
             if (citaId) router.setParams({ citaId: undefined });
@@ -261,6 +266,7 @@ function BloqueVisita({
   notas,
   edadMeses,
   favoritos,
+  alCambiarFavoritos,
   alCambiar,
 }: {
   paciente: Paciente;
@@ -269,6 +275,7 @@ function BloqueVisita({
   notas: NotaAclaratoria[];
   edadMeses: number | null;
   favoritos: { id: string; texto: string }[];
+  alCambiarFavoritos: () => void;
   alCambiar: () => void;
 }) {
   const db = useSQLiteContext();
@@ -381,6 +388,7 @@ function BloqueVisita({
           consultaId={v.id}
           pesoKg={v.pesoKg}
           favoritos={favoritos}
+          alCambiarFavoritos={alCambiarFavoritos}
           alTerminar={() => {
             setConReceta(false);
             alCambiar();
@@ -411,12 +419,14 @@ function NuevaVisita({
   paciente: p,
   edadMeses,
   favoritos,
+  alCambiarFavoritos,
   citaId,
   alGuardar,
 }: {
   paciente: Paciente;
   edadMeses: number | null;
   favoritos: { id: string; texto: string }[];
+  alCambiarFavoritos: () => void;
   citaId?: string;
   alGuardar: () => void;
 }) {
@@ -494,6 +504,7 @@ function NuevaVisita({
               void usarFavorito(db, f.id);
             }}
           />
+          <GuardarFavoritos indicaciones={indicacionesDe(b.receta)} favoritos={favoritos} alGuardar={alCambiarFavoritos} />
           {b.peso.trim() !== '' && hayReceta && <Text style={s.mini}>La receta lleva el peso de esta visita.</Text>}
         </>
       ) : (
@@ -521,12 +532,14 @@ function EditorReceta({
   consultaId,
   pesoKg,
   favoritos,
+  alCambiarFavoritos,
   alTerminar,
 }: {
   paciente: Paciente;
   consultaId: string;
   pesoKg: number | null;
   favoritos: { id: string; texto: string }[];
+  alCambiarFavoritos: () => void;
   alTerminar: () => void;
 }) {
   const db = useSQLiteContext();
@@ -560,6 +573,7 @@ function EditorReceta({
           void usarFavorito(db, f.id);
         }}
       />
+      <GuardarFavoritos indicaciones={indicacionesDe(t)} favoritos={favoritos} alGuardar={alCambiarFavoritos} />
       <Boton1 texto="Guardar e imprimir receta" onPress={() => void guardar(true)} />
       <View style={s.enlaces}>
         <EnlaceTexto texto="Guardar sin imprimir" onPress={() => void guardar(false)} />
@@ -632,10 +646,57 @@ function Favoritos({ favoritos, alElegir }: { favoritos: { id: string; texto: st
   if (favoritos.length === 0) return null;
   return (
     <View style={s.chips}>
-      {favoritos.map((f) => (
+      {favoritos.slice(0, 12).map((f) => (
         <Pressable key={f.id} onPress={() => alElegir(f)} style={({ pressed }) => [s.chip, pressed && { opacity: 0.7 }]} accessibilityRole="button">
           <Text style={s.chipTexto} numberOfLines={1}>
             ＋ {f.texto.split('\n')[0]}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+/** Cada medicamento escrito que aún no es favorito tiene su botón para guardarlo. */
+function GuardarFavoritos({
+  indicaciones,
+  favoritos,
+  alGuardar,
+}: {
+  indicaciones: string[];
+  favoritos: { texto: string }[];
+  alGuardar: () => void;
+}) {
+  const db = useSQLiteContext();
+  const [guardando, setGuardando] = useState<string | null>(null);
+  const nuevas = indicacionesSinFavorito(indicaciones, favoritos);
+  if (nuevas.length === 0) return null;
+
+  async function guardar(t: string) {
+    setGuardando(t);
+    try {
+      await crearFavorito(db, t);
+      alGuardar();
+    } catch (e) {
+      Alert.alert('No se pudo guardar en favoritos', e instanceof Error ? e.message : String(e));
+    } finally {
+      setGuardando(null);
+    }
+  }
+
+  return (
+    <View style={{ gap: 4 }}>
+      {nuevas.map((t) => (
+        <Pressable
+          key={t}
+          onPress={() => void guardar(t)}
+          disabled={guardando !== null}
+          style={({ pressed }) => [s.guardarFav, pressed && { opacity: 0.7 }]}
+          accessibilityRole="button"
+          accessibilityLabel={`Guardar como favorito: ${t}`}
+        >
+          <Text style={s.guardarFavTexto} numberOfLines={1}>
+            {guardando === t ? 'Guardando…' : `☆ Guardar como favorito: ${t.split('\n')[0]}`}
           </Text>
         </Pressable>
       ))}
@@ -710,6 +771,8 @@ const s = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio.s },
   chip: { borderWidth: 1, borderColor: colores.primario, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5, maxWidth: 260 },
   chipTexto: { fontSize: texto.pequeno, color: colores.primario },
+  guardarFav: { alignSelf: 'flex-start', paddingVertical: 4, maxWidth: '100%' },
+  guardarFavTexto: { fontSize: texto.pequeno, color: colores.primario, fontWeight: '600' },
   boton: { backgroundColor: colores.primario, borderRadius: radio.m, paddingVertical: 12, paddingHorizontal: espacio.l, alignItems: 'center' },
   botonSecundario: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colores.primario },
   botonTexto: { color: '#FFFFFF', fontSize: texto.normal, fontWeight: '700' },
