@@ -92,7 +92,7 @@ export default function DetalleCita() {
           <Boton
             texto="🩺 Registrar consulta"
             onPress={() =>
-              router.push({ pathname: '/pacientes/[id]/consulta-nueva', params: { id: c.pacienteId as string, citaId: c.id } })
+              router.push({ pathname: '/pacientes/[id]', params: { id: c.pacienteId as string, citaId: c.id } })
             }
           />
         )}

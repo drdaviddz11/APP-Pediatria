@@ -1,5 +1,5 @@
-// Acceso a datos de consultas. Las consultas se guardan una sola vez y no se modifican;
-// para corregir o completar información se agregan notas aclaratorias con su fecha.
+// Acceso a datos de consultas (visitas). Una visita se puede corregir solo el mismo día en que se hizo;
+// después, para corregir o completar información se agregan notas aclaratorias con su fecha.
 
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { Consulta, ConsultaEntrada, NotaAclaratoria } from '../domain/types';
@@ -29,7 +29,9 @@ interface FilaConsulta {
   tratamiento: string;
   indicaciones: string;
   fecha_seguimiento: string | null;
+  texto?: string;
   creado_en: string;
+  actualizado_en?: string | null;
 }
 
 function aConsulta(f: FilaConsulta): Consulta {
@@ -57,7 +59,9 @@ function aConsulta(f: FilaConsulta): Consulta {
     tratamiento: f.tratamiento,
     indicaciones: f.indicaciones,
     fechaSeguimiento: f.fecha_seguimiento,
+    texto: f.texto ?? '',
     creadoEn: f.creado_en,
+    actualizadoEn: f.actualizado_en ?? null,
   };
 }
 
@@ -69,8 +73,8 @@ export async function crearConsulta(db: SQLiteDatabase, pacienteId: string, c: C
         id, paciente_id, fecha_hora, motivo, enfermedad_actual, sintomas, exploracion_fisica,
         temperatura_c, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2,
         presion_sistolica, presion_diastolica, peso_kg, talla_cm, tipo_medicion, perimetro_cefalico_cm, edema,
-        diagnosticos, estudios_solicitados, tratamiento, indicaciones, fecha_seguimiento, creado_en
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        diagnosticos, estudios_solicitados, tratamiento, indicaciones, fecha_seguimiento, texto, creado_en
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       pacienteId,
       c.fechaHora,
@@ -94,6 +98,7 @@ export async function crearConsulta(db: SQLiteDatabase, pacienteId: string, c: C
       c.tratamiento.trim(),
       c.indicaciones.trim(),
       c.fechaSeguimiento,
+      (c.texto ?? '').replace(/\r/g, '').trim(),
       ahoraISO(),
     );
     await registrarBitacora(db, 'consulta', id, 'crear');
@@ -155,5 +160,86 @@ export async function agregarNota(db: SQLiteDatabase, consultaId: string, texto:
       ahoraISO(),
     );
     await registrarBitacora(db, 'nota_aclaratoria', id, 'crear');
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Expediente como documento: visitas con texto libre, peso y talla
+// ---------------------------------------------------------------------------
+
+export interface VisitaEntrada {
+  texto: string;
+  pesoKg: number | null;
+  tallaCm: number | null;
+  perimetroCefalicoCm: number | null;
+}
+
+/** La OMS mide acostado antes de los 24 meses y de pie después. */
+export function tipoMedicionPorEdad(edadMeses: number | null): 'acostado' | 'de_pie' {
+  return edadMeses != null && edadMeses < 24 ? 'acostado' : 'de_pie';
+}
+
+/** ¿Se puede corregir todavía? Solo el mismo día (calendario local) en que se creó. */
+export function puedeCorregirVisita(creadoEn: string, ahora = new Date()): boolean {
+  const c = new Date(creadoEn);
+  return c.getFullYear() === ahora.getFullYear() && c.getMonth() === ahora.getMonth() && c.getDate() === ahora.getDate();
+}
+
+function visitaVacia(v: VisitaEntrada): boolean {
+  return !v.texto.trim() && v.pesoKg == null && v.tallaCm == null && v.perimetroCefalicoCm == null;
+}
+
+/** Nueva visita del expediente-documento. */
+export async function crearVisita(
+  db: SQLiteDatabase,
+  pacienteId: string,
+  v: VisitaEntrada,
+  opciones: { edadMeses: number | null; fechaHora?: string },
+): Promise<string> {
+  if (visitaVacia(v)) throw new Error('Escriba algo de la visita o el peso o la talla.');
+  return crearConsulta(db, pacienteId, {
+    fechaHora: opciones.fechaHora ?? ahoraISO(),
+    motivo: '',
+    enfermedadActual: '',
+    sintomas: '',
+    exploracionFisica: '',
+    temperaturaC: null,
+    frecuenciaCardiaca: null,
+    frecuenciaRespiratoria: null,
+    saturacionO2: null,
+    presionSistolica: null,
+    presionDiastolica: null,
+    pesoKg: v.pesoKg,
+    tallaCm: v.tallaCm,
+    tipoMedicion: v.tallaCm != null ? tipoMedicionPorEdad(opciones.edadMeses) : null,
+    perimetroCefalicoCm: v.perimetroCefalicoCm,
+    edema: false,
+    diagnosticos: '',
+    estudiosSolicitados: '',
+    tratamiento: '',
+    indicaciones: '',
+    fechaSeguimiento: null,
+    texto: v.texto,
+  });
+}
+
+/** Corrige una visita del mismo día (texto, peso, talla, perímetro). Guarda la versión anterior en la bitácora. */
+export async function corregirVisita(db: SQLiteDatabase, id: string, v: VisitaEntrada, opciones: { edadMeses: number | null }, ahora = new Date()): Promise<void> {
+  const anterior = await obtenerConsulta(db, id);
+  if (!anterior) throw new Error('La visita no existe.');
+  if (!puedeCorregirVisita(anterior.creadoEn, ahora)) throw new Error('Solo se puede corregir una visita el mismo día; después agregue una nota aclaratoria.');
+  if (visitaVacia(v) && !anterior.motivo && !anterior.diagnosticos) throw new Error('La visita no puede quedar vacía.');
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      'UPDATE consultas SET texto = ?, peso_kg = ?, talla_cm = ?, tipo_medicion = ?, perimetro_cefalico_cm = ?, actualizado_en = ? WHERE id = ?',
+      v.texto.replace(/\r/g, '').trim(),
+      v.pesoKg,
+      v.tallaCm,
+      v.tallaCm != null ? anterior.tipoMedicion ?? tipoMedicionPorEdad(opciones.edadMeses) : null,
+      v.perimetroCefalicoCm,
+      ahoraISO(),
+      id,
+    );
+    await registrarBitacora(db, 'consulta', id, 'modificar', anterior);
   });
 }

@@ -16,7 +16,8 @@ export interface TablaSync {
 export const TABLAS_SYNC: TablaSync[] = [
   { nombre: 'pacientes', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
   { nombre: 'historias_clinicas', llave: ['paciente_id'], columnasFecha: ['actualizado_en'] },
-  { nombre: 'consultas', llave: ['id'], inmutable: true, columnasFecha: ['creado_en'] },
+  // Desde la versión 13 una visita se puede corregir el mismo día: ya no es inmutable.
+  { nombre: 'consultas', llave: ['id'], columnasFecha: ['actualizado_en', 'creado_en'] },
   { nombre: 'notas_aclaratorias', llave: ['id'], inmutable: true, columnasFecha: ['creado_en'] },
   { nombre: 'bitacora', llave: ['uid'], inmutable: true, columnasLocales: ['id'], columnasFecha: ['fecha'] },
   { nombre: 'configuracion', llave: ['clave'] },

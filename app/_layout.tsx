@@ -80,6 +80,7 @@ export default function Raiz() {
           <Stack.Screen name="google" options={{ title: 'Conectando con Google…' }} />
           <Stack.Screen name="pacientes/nuevo" options={{ title: 'Nuevo paciente', presentation: 'modal' }} />
           <Stack.Screen name="pacientes/[id]/index" options={{ title: 'Expediente' }} />
+          <Stack.Screen name="pacientes/[id]/detalle" options={{ title: 'Expediente completo' }} />
           <Stack.Screen name="pacientes/[id]/editar" options={{ title: 'Editar datos' }} />
           <Stack.Screen name="pacientes/[id]/historia" options={{ title: 'Historia clínica' }} />
           <Stack.Screen name="pacientes/[id]/consulta-nueva" options={{ title: 'Nueva consulta' }} />

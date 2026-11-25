@@ -121,7 +121,7 @@ export default function Pacientes() {
             style={({ pressed }) => [s.tarjeta, pressed && { opacity: 0.7 }]}
             onPress={() =>
               paraConsulta
-                ? router.replace({ pathname: '/pacientes/[id]/consulta-nueva', params: { id: item.id } })
+                ? router.replace({ pathname: '/pacientes/[id]', params: { id: item.id } })
                 : router.push({ pathname: '/pacientes/[id]', params: { id: item.id } })
             }
           >

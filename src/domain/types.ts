@@ -79,10 +79,14 @@ export interface Consulta extends SignosVitales {
   tratamiento: string;
   indicaciones: string;
   fechaSeguimiento: string | null; // AAAA-MM-DD
+  /** Texto libre de la visita (expediente como documento). */
+  texto: string;
   creadoEn: string;
+  /** Última corrección (solo el mismo día). */
+  actualizadoEn: string | null;
 }
 
-export type ConsultaEntrada = Omit<Consulta, 'id' | 'pacienteId' | 'creadoEn'>;
+export type ConsultaEntrada = Omit<Consulta, 'id' | 'pacienteId' | 'creadoEn' | 'actualizadoEn' | 'texto'> & { texto?: string };
 
 /** Nota agregada a una consulta ya guardada (las consultas no se editan). */
 export interface NotaAclaratoria {

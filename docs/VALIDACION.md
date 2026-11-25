@@ -226,6 +226,15 @@ Pasos del médico antes de usar datos reales: clave en cada equipo; contraseña,
 
 Pendientes técnicos: política de seguridad de contenido (CSP) cuando se pueda probar; Face ID en la app propia.
 
+## Expediente como documento (25 nov 2026)
+
+Decisiones del médico: peso y talla en cada visita; la visita es solo texto libre; las secciones anteriores se dejan disponibles sin estorbar; una visita se corrige solo el mismo día.
+
+- Corrección el mismo día calendario en la app; la base de datos rechaza cambios a visitas de más de 36 horas (margen por zona horaria), salvo los que llegan por sincronización.
+- Cada corrección guarda la versión anterior en la bitácora.
+- La talla se registra acostado en menores de 24 meses y de pie después, para la evaluación OMS.
+- Pruebas en `testExpediente` (y la actualización v5 → v13 en `testMigracion`).
+
 ## Pendiente antes de uso clínico
 
 - Revisión por el médico de los textos de interpretación y de los criterios de alerta (caída de Z ≥ 1 o paso por debajo de −2 DE).

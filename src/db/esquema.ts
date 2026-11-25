@@ -458,6 +458,21 @@ export const MIGRACIONES: string[] = [
     valor TEXT NOT NULL
   );
   `,
+
+  // Versión 13: expediente como documento (decisión del médico, 25 nov 2026).
+  // Cada visita lleva un texto libre; se puede corregir solo el mismo día (la app revisa el día local;
+  // la base de datos, como seguro, no deja cambiar visitas de más de 36 horas). Después, notas aclaratorias.
+  `
+  ALTER TABLE consultas ADD COLUMN texto TEXT NOT NULL DEFAULT '';
+  ALTER TABLE consultas ADD COLUMN actualizado_en TEXT;
+  DROP TRIGGER consultas_sin_modificar;
+  CREATE TRIGGER consultas_solo_mismo_dia BEFORE UPDATE ON consultas
+  WHEN (SELECT aplicando FROM sync_control WHERE id = 1) = 0
+    AND julianday('now') - julianday(OLD.creado_en) > 1.5
+  BEGIN
+    SELECT RAISE(ABORT, 'Solo se puede corregir una visita el mismo día; después agregue una nota aclaratoria.');
+  END;
+  `,
 ];
 
 export async function migrarBaseDeDatos(db: SQLiteDatabase): Promise<void> {

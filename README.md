@@ -10,8 +10,10 @@ Aplicación para administrar una consulta pediátrica: expedientes, consultas, e
 - Expediente con datos personales, responsable, contacto de emergencia y consentimientos.
 - Edad calculada automáticamente y edad corregida para prematuros (menores de 24 meses nacidos antes de las 37 semanas).
 - Historia clínica: alergias (resaltadas en rojo), medicamentos, antecedentes, vacunas, hospitalizaciones y diagnósticos previos.
-- Registro de consultas: motivo, padecimiento, antropometría, signos vitales, exploración, diagnósticos, estudios, tratamiento, indicaciones y seguimiento.
-- Las consultas guardadas **no se pueden modificar**; las correcciones se agregan como notas aclaratorias con fecha.
+- **Expediente como un solo documento:** arriba quedan siempre el nombre, la edad, el teléfono de contacto y el último peso y talla; abajo, cada visita en orden (la más reciente al final). La visita nueva se escribe al final, en texto libre, con peso, talla (y perímetro cefálico en menores de 3 años) y su receta en el mismo lugar, sin cambiar de pantalla.
+- El nombre y el teléfono se corrigen desde el mismo expediente (✎), con registro en la bitácora.
+- Una visita **solo se puede corregir el mismo día** (la versión anterior queda en la bitácora); después, las correcciones se agregan como notas aclaratorias con fecha. La base de datos también lo impide como seguro.
+- El formulario de consulta por secciones (signos vitales, exploración, diagnósticos, cobro…) sigue disponible en «Expediente completo».
 - Alertas informativas de datos improbables: unidades equivocadas (metros, gramos, °F), valores fuera de rango, cambios bruscos de peso y tipo de medición que no corresponde a la edad.
 - Bitácora interna de creaciones y modificaciones.
 - Pacientes de demostración ficticios para practicar.

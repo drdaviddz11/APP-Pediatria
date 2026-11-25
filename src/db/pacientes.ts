@@ -340,3 +340,37 @@ export async function borrarPacientesDemo(db: SQLiteDatabase): Promise<number> {
   const r = await db.runAsync('DELETE FROM pacientes WHERE es_demo = 1');
   return r.changes;
 }
+
+/**
+ * Corrige el nombre, los apellidos o el teléfono de contacto directamente desde el expediente.
+ * El teléfono de contacto se usa también para WhatsApp si el paciente no tenía otro número de WhatsApp.
+ */
+export async function corregirDatosBasicos(
+  db: SQLiteDatabase,
+  id: string,
+  cambios: { nombres?: string; apellidos?: string; telefonoPrincipal?: string },
+): Promise<void> {
+  const anterior = await obtenerPaciente(db, id);
+  if (!anterior) throw new Error('El paciente no existe.');
+  const nuevo = limpiar({
+    ...anterior,
+    nombres: cambios.nombres ?? anterior.nombres,
+    apellidos: cambios.apellidos ?? anterior.apellidos,
+    telefonoPrincipal: cambios.telefonoPrincipal ?? anterior.telefonoPrincipal,
+  });
+  if (!nuevo.nombres || !nuevo.apellidos) throw new Error('Escriba el nombre y los apellidos.');
+  const tel = soloDigitos(nuevo.telefonoPrincipal);
+  if (nuevo.telefonoPrincipal && (tel.length < 8 || tel.length > 15)) throw new Error('El teléfono parece incompleto (8 dígitos, o con el código del país).');
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      'UPDATE pacientes SET nombres = ?, apellidos = ?, telefono_principal = ?, busqueda = ?, actualizado_en = ? WHERE id = ?',
+      nuevo.nombres,
+      nuevo.apellidos,
+      nuevo.telefonoPrincipal,
+      textoBusqueda(nuevo),
+      ahoraISO(),
+      id,
+    );
+    await registrarBitacora(db, 'paciente', id, 'modificar', anterior);
+  });
+}

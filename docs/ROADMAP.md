@@ -88,6 +88,14 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Felicitación por WhatsApp uno tras otro, solo con autorización; plantilla editable con [EDAD]; anotada para no repetirla (migración 11, sincronización y respaldos).
 - [ ] Envío automático (requiere WhatsApp Business Platform, fase 7).
 
+## Expediente como documento (agregado a petición del médico, 25 nov 2026)
+
+- [x] Un solo documento por paciente: datos de contacto y últimas medidas arriba; visitas en orden con la nueva al final.
+- [x] Visita en texto libre con peso, talla y perímetro cefálico; receta en el mismo lugar (imprimir al guardar); borrador que no se pierde.
+- [x] Corrección de la visita solo el mismo día (migración 13: la visita ya se sincroniza como corregible); notas aclaratorias después.
+- [x] Corrección del nombre y el teléfono desde el expediente.
+- [x] Las citas de la agenda abren este documento y quedan completadas al guardar la visita.
+
 ## Caja y cierre diario (agregado a petición del médico)
 
 - [x] Cobro en cada consulta con precio sugerido (primera vez / control) y otros ingresos.
