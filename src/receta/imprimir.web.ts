@@ -5,7 +5,18 @@
 // En el TELÉFONO (Safari del iPhone) el marco invisible no se imprime: ahí la hoja se pone dentro de la propia
 // página, oculta en pantalla, y se imprime la página entera (solo se ve la hoja en la impresión).
 
+import { Alert } from '../ui/dialogo';
 import { WEB_EN_TELEFONO } from '../ui/plataforma';
+import { pdfDesdeHtml } from './pdfWeb';
+
+/**
+ * App agregada a la pantalla de inicio del iPhone: ahí Apple no permite imprimir desde la página,
+ * así que se hace el PDF y se abre "Compartir" (WhatsApp, Correo, Archivos, Imprimir…).
+ */
+export const EN_PANTALLA_DE_INICIO =
+  WEB_EN_TELEFONO &&
+  typeof window !== 'undefined' &&
+  ((navigator as Navigator & { standalone?: boolean }).standalone === true || !!window.matchMedia?.('(display-mode: standalone)').matches);
 
 export interface TamanoHoja {
   ancho: number;
@@ -16,19 +27,52 @@ export interface TamanoHoja {
 /** El tamaño lo pone la hoja misma (@page); se conserva el parámetro para que el código sea igual al del teléfono. */
 export const HOJA_RECETA: TamanoHoja = { ancho: 612, alto: 396, horizontal: true };
 
-export async function compartirPdf(html: string, _nombreArchivo: string, _hoja: TamanoHoja = HOJA_RECETA): Promise<void> {
-  await imprimirHtml(html);
+export async function compartirPdf(html: string, nombreArchivo: string, hoja: TamanoHoja = HOJA_RECETA): Promise<void> {
+  if (EN_PANTALLA_DE_INICIO) return entregarPdf(html, nombreArchivo);
+  await imprimirHtml(html, hoja);
+}
+
+function tituloDe(html: string): string {
+  const m = /<title>([^<]*)<\/title>/i.exec(html);
+  const t = (m?.[1] ?? 'Documento').replace(/&amp;/g, '&').replace(/[\\/:*?"<>|]/g, '-').trim();
+  return t || 'Documento';
+}
+
+/** Hace el PDF y, con un toque (el iPhone lo exige), abre Compartir. */
+export async function entregarPdf(html: string, nombreArchivo: string): Promise<void> {
+  const bytes = await pdfDesdeHtml(html);
+  const nombre = /\.pdf$/i.test(nombreArchivo) ? nombreArchivo : `${nombreArchivo}.pdf`;
+  const archivo = new File([bytes as BlobPart], nombre, { type: 'application/pdf' });
+  const abrir = () => {
+    const url = URL.createObjectURL(archivo);
+    window.open(url, '_blank') ?? (window.location.href = url);
+    setTimeout(() => URL.revokeObjectURL(url), 10 * 60_000);
+  };
+  const compartir = () => {
+    if (navigator.canShare?.({ files: [archivo] })) {
+      navigator.share({ files: [archivo], title: nombre.replace(/\.pdf$/i, '') }).catch((e: unknown) => {
+        if (!(e instanceof Error && e.name === 'AbortError')) abrir();
+      });
+    } else abrir();
+  };
+  Alert.alert('PDF listo', 'Toque Compartir y elija WhatsApp, Correo, "Guardar en Archivos" o "Imprimir".', [
+    { text: 'Cancelar', style: 'cancel' },
+    { text: 'Compartir', onPress: compartir },
+  ]);
 }
 
 /** En la computadora el PDF se guarda desde el cuadro de impresión (destino "Guardar como PDF"). */
 export const PDF_CON_DIALOGO_DE_IMPRESION = true;
 
 /** Cómo guardar o enviar el PDF, para los textos de las pantallas. */
-export const AYUDA_PDF = WEB_EN_TELEFONO
+export const AYUDA_PDF = EN_PANTALLA_DE_INICIO
+  ? 'Se prepara el PDF y se abre Compartir: elija WhatsApp, Correo, "Guardar en Archivos" o "Imprimir". '
+  : WEB_EN_TELEFONO
   ? 'En el iPhone se abre la vista de impresión: para el PDF toque Compartir (arriba) y elija WhatsApp, Correo o "Guardar en Archivos". '
   : 'Para el PDF se abre el cuadro de impresión: en "Destino" elija "Guardar como PDF". ';
 
 export function imprimirHtml(html: string, hoja: TamanoHoja = HOJA_RECETA): Promise<void> {
+  if (EN_PANTALLA_DE_INICIO) return entregarPdf(html, tituloDe(html));
   return WEB_EN_TELEFONO ? imprimirEnLaPagina(html) : imprimirEnMarco(html, hoja);
 }
 
