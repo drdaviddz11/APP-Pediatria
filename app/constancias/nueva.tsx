@@ -24,7 +24,7 @@ import type { Consulta, Paciente } from '../../src/domain/types';
 import { usePlan } from '../../src/plan/PlanProvider';
 import { FONDO_RECETA } from '../../src/receta/fondo';
 import { fechaReceta, nombreEnReceta } from '../../src/receta/hoja';
-import { compartirPdf, imprimirHtml, PDF_CON_DIALOGO_DE_IMPRESION } from '../../src/receta/imprimir';
+import { AYUDA_PDF, compartirPdf, imprimirHtml, PDF_CON_DIALOGO_DE_IMPRESION } from '../../src/receta/imprimir';
 import { Aviso, Boton, Campo, Cargando, EnlaceTexto, PantallaFormulario, Seccion, Selector, estilos } from '../../src/ui/componentes';
 import { Alert } from '../../src/ui/dialogo';
 import { PantallaSoloPro } from '../../src/ui/pro';
@@ -266,7 +266,7 @@ function NuevaConstancia() {
       <Boton texto="Guardar y crear PDF" variante="secundario" onPress={() => void guardar('pdf')} deshabilitado={guardando} />
       <Text style={[estilos.suave, { fontSize: texto.mini, marginTop: espacio.s }]}>
         {PDF_CON_DIALOGO_DE_IMPRESION
-          ? 'Para el PDF se abre el cuadro de impresión: en "Destino" elija "Guardar como PDF". '
+          ? AYUDA_PDF
           : 'El PDF se puede enviar por WhatsApp o correo, o guardar en Archivos. '}
         La constancia queda guardada en el expediente; para corregirla, haga una nueva.
       </Text>

@@ -1,6 +1,11 @@
 // Imprimir desde la COMPUTADORA: se arma la hoja en un marco invisible y se abre el cuadro de
 // impresión del navegador (con vista previa). En Chrome, elegir el tamaño de papel "media carta" si no sale solo.
 // Para el PDF se usa el mismo cuadro con el destino "Guardar como PDF" (el nombre sale del <title> del documento).
+//
+// En el TELÉFONO (Safari del iPhone) el marco invisible no se imprime: ahí la hoja se pone dentro de la propia
+// página, oculta en pantalla, y se imprime la página entera (solo se ve la hoja en la impresión).
+
+import { WEB_EN_TELEFONO } from '../ui/plataforma';
 
 export interface TamanoHoja {
   ancho: number;
@@ -18,7 +23,60 @@ export async function compartirPdf(html: string, _nombreArchivo: string, _hoja: 
 /** En la computadora el PDF se guarda desde el cuadro de impresión (destino "Guardar como PDF"). */
 export const PDF_CON_DIALOGO_DE_IMPRESION = true;
 
-export function imprimirHtml(html: string, _hoja: TamanoHoja = HOJA_RECETA): Promise<void> {
+/** Cómo guardar o enviar el PDF, para los textos de las pantallas. */
+export const AYUDA_PDF = WEB_EN_TELEFONO
+  ? 'En el iPhone se abre la vista de impresión: para el PDF toque Compartir (arriba) y elija WhatsApp, Correo o "Guardar en Archivos". '
+  : 'Para el PDF se abre el cuadro de impresión: en "Destino" elija "Guardar como PDF". ';
+
+export function imprimirHtml(html: string, hoja: TamanoHoja = HOJA_RECETA): Promise<void> {
+  return WEB_EN_TELEFONO ? imprimirEnLaPagina(html) : imprimirEnMarco(html, hoja);
+}
+
+const ID_IMPRESION = 'pediacontrol-impresion';
+
+/** Encierra las reglas de la hoja en @media print, para que no cambien la app en pantalla. */
+export function estiloSoloImpresion(css: string): string {
+  return `@media screen { #${ID_IMPRESION} { display: none !important; } }
+@media print {
+  body > *:not(#${ID_IMPRESION}) { display: none !important; }
+  #${ID_IMPRESION} { display: block !important; }
+${css}
+}`;
+}
+
+/** Imprime la hoja desde la propia página (Safari del iPhone no imprime marcos invisibles). */
+export async function imprimirEnLaPagina(html: string): Promise<void> {
+  document.getElementById(ID_IMPRESION)?.remove();
+  document.getElementById(`${ID_IMPRESION}-estilo`)?.remove();
+  const hoja = new DOMParser().parseFromString(html, 'text/html');
+  const estilo = document.createElement('style');
+  estilo.id = `${ID_IMPRESION}-estilo`;
+  estilo.textContent = estiloSoloImpresion([...hoja.querySelectorAll('style')].map((e) => e.textContent ?? '').join('\n'));
+  const contenedor = document.createElement('div');
+  contenedor.id = ID_IMPRESION;
+  contenedor.innerHTML = hoja.body.innerHTML;
+  document.head.appendChild(estilo);
+  document.body.appendChild(contenedor);
+  // Las imágenes (fondo, firma) deben estar listas antes de abrir la impresión.
+  await Promise.all(
+    [...contenedor.querySelectorAll('img')].map((img) =>
+      img.decode ? img.decode().catch(() => undefined) : Promise.resolve(),
+    ),
+  );
+  const tituloAnterior = document.title;
+  if (hoja.title) document.title = hoja.title; // nombre del PDF
+  const limpiar = () => {
+    document.title = tituloAnterior;
+    contenedor.remove();
+    estilo.remove();
+  };
+  window.addEventListener('afterprint', () => setTimeout(limpiar, 500), { once: true });
+  window.print();
+  // Por si el navegador no avisa "afterprint": la hoja está oculta en pantalla, así que no estorba mientras tanto.
+  setTimeout(() => contenedor.isConnected && limpiar(), 10 * 60_000);
+}
+
+function imprimirEnMarco(html: string, _hoja: TamanoHoja): Promise<void> {
   return new Promise((resolver, rechazar) => {
     const marco = document.createElement('iframe');
     marco.setAttribute('aria-hidden', 'true');

@@ -12,7 +12,7 @@ import type { Paciente } from '../../src/domain/types';
 import { usePlan } from '../../src/plan/PlanProvider';
 import { FONDO_RECETA } from '../../src/receta/fondo';
 import { fechaReceta, nombreEnReceta } from '../../src/receta/hoja';
-import { compartirPdf, imprimirHtml, PDF_CON_DIALOGO_DE_IMPRESION } from '../../src/receta/imprimir';
+import { AYUDA_PDF, compartirPdf, imprimirHtml, PDF_CON_DIALOGO_DE_IMPRESION } from '../../src/receta/imprimir';
 import { Boton, Cargando, PantallaFormulario, Seccion, estilos } from '../../src/ui/componentes';
 import { Alert } from '../../src/ui/dialogo';
 import { AvisoPro } from '../../src/ui/pro';
@@ -99,7 +99,7 @@ export default function VerConstancia() {
             onPress={() => router.push({ pathname: '/constancias/nueva', params: { pacienteId: constancia.pacienteId, base: constancia.id } })}
           />
           <Text style={[estilos.suave, { fontSize: texto.mini, marginTop: espacio.s }]}>
-            {PDF_CON_DIALOGO_DE_IMPRESION ? 'Para el PDF, en el cuadro de impresión elija "Destino: Guardar como PDF". ' : ''}
+            {AYUDA_PDF}
             Las constancias emitidas no se modifican; quedan en el expediente con su folio.
           </Text>
         </>

@@ -12,6 +12,9 @@ export interface TamanoHoja {
   horizontal: boolean;
 }
 
+/** En el teléfono el PDF se envía con la hoja de compartir; no hace falta ayuda extra. */
+export const AYUDA_PDF = '';
+
 /** Media carta horizontal (la receta). */
 export const HOJA_RECETA: TamanoHoja = { ancho: TAMANO_HOJA_PT.ancho, alto: TAMANO_HOJA_PT.alto, horizontal: true };
 
