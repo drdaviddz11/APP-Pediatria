@@ -46,7 +46,7 @@ export function estadoDelNavegador(): 'listo' | 'preparar' | string {
     intentos = 0;
   }
   if (g.navigator?.serviceWorker && intentos < 2) return 'preparar';
-  return 'Este navegador no pudo preparar la base de datos de la app. En la computadora, ábrala en Google Chrome o Microsoft Edge y recargue la página.';
+  return 'Este navegador no pudo preparar la base de datos de la app.';
 }
 
 /** Activa el service worker que agrega los encabezados de aislamiento y recarga la página (como máximo dos veces). */

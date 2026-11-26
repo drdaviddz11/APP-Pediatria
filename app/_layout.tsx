@@ -2,15 +2,14 @@ import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { Suspense, useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
 import { migrarBaseDeDatos } from '../src/db/esquema';
 import { PlanProvider } from '../src/plan/PlanProvider';
 import { BloqueoProvider } from '../src/seguridad/BloqueoProvider';
 import { SincronizacionAutomatica } from '../src/sincronizacion/automatica';
-import { Cargando } from '../src/ui/componentes';
+import { CargandoBase, PantallaProblema, ProtectorArranque } from '../src/ui/arranque';
 import { AnfitrionDialogos } from '../src/ui/dialogo';
 import { estadoDelNavegador, pedirAlmacenamientoPersistente, prepararInstalacion, prepararNavegador } from '../src/ui/plataforma';
-import { colores, espacio, texto } from '../src/ui/tema';
+import { colores } from '../src/ui/tema';
 
 export default function Raiz() {
   useEffect(pedirAlmacenamientoPersistente, []);
@@ -21,22 +20,16 @@ export default function Raiz() {
   useEffect(() => {
     if (navegador !== 'preparar') return;
     prepararNavegador().catch(() =>
-      setNavegador('Este navegador no pudo preparar la base de datos de la app. Ábrala en Google Chrome o Microsoft Edge y recargue la página.'),
+      setNavegador('Este navegador no pudo preparar la base de datos de la app.'),
     );
   }, [navegador]);
-  if (navegador === 'preparar') return <Cargando />;
+  if (navegador === 'preparar') return <CargandoBase />;
   const problema = navegador === 'listo' ? null : navegador;
-  if (problema) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: espacio.xl, backgroundColor: colores.fondo }}>
-        <Text style={{ fontSize: texto.titulo, fontWeight: '700', color: colores.texto, marginBottom: espacio.m }}>PediaControl Pro</Text>
-        <Text style={{ fontSize: texto.normal, color: colores.texto, maxWidth: 520, textAlign: 'center', lineHeight: 24 }}>{problema}</Text>
-      </View>
-    );
-  }
+  if (problema) return <PantallaProblema titulo={problema} />;
 
   return (
-    <Suspense fallback={<Cargando />}>
+    <ProtectorArranque>
+    <Suspense fallback={<CargandoBase />}>
       <SQLiteProvider databaseName="pediacontrol.db" onInit={migrarBaseDeDatos} useSuspense>
         <StatusBar style="dark" />
         <BloqueoProvider>
@@ -93,5 +86,6 @@ export default function Raiz() {
         <AnfitrionDialogos />
       </SQLiteProvider>
     </Suspense>
+    </ProtectorArranque>
   );
 }
