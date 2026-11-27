@@ -172,6 +172,8 @@ export interface VisitaEntrada {
   pesoKg: number | null;
   tallaCm: number | null;
   perimetroCefalicoCm: number | null;
+  /** Cita de control (AAAA-MM-DD): con ella la app recuerda que al paciente le toca control. */
+  fechaSeguimiento?: string | null;
 }
 
 /** La OMS mide acostado antes de los 24 meses y de pie después. */
@@ -218,12 +220,12 @@ export async function crearVisita(
     estudiosSolicitados: '',
     tratamiento: '',
     indicaciones: '',
-    fechaSeguimiento: null,
+    fechaSeguimiento: v.fechaSeguimiento ?? null,
     texto: v.texto,
   });
 }
 
-/** Corrige una visita del mismo día (texto, peso, talla, perímetro). Guarda la versión anterior en la bitácora. */
+/** Corrige una visita del mismo día (texto, peso, talla, perímetro, cita de control). Guarda la versión anterior en la bitácora. */
 export async function corregirVisita(db: SQLiteDatabase, id: string, v: VisitaEntrada, opciones: { edadMeses: number | null }, ahora = new Date()): Promise<void> {
   const anterior = await obtenerConsulta(db, id);
   if (!anterior) throw new Error('La visita no existe.');
@@ -231,12 +233,13 @@ export async function corregirVisita(db: SQLiteDatabase, id: string, v: VisitaEn
   if (visitaVacia(v) && !anterior.motivo && !anterior.diagnosticos) throw new Error('La visita no puede quedar vacía.');
   await db.withTransactionAsync(async () => {
     await db.runAsync(
-      'UPDATE consultas SET texto = ?, peso_kg = ?, talla_cm = ?, tipo_medicion = ?, perimetro_cefalico_cm = ?, actualizado_en = ? WHERE id = ?',
+      'UPDATE consultas SET texto = ?, peso_kg = ?, talla_cm = ?, tipo_medicion = ?, perimetro_cefalico_cm = ?, fecha_seguimiento = ?, actualizado_en = ? WHERE id = ?',
       v.texto.replace(/\r/g, '').trim(),
       v.pesoKg,
       v.tallaCm,
       v.tallaCm != null ? anterior.tipoMedicion ?? tipoMedicionPorEdad(opciones.edadMeses) : null,
       v.perimetroCefalicoCm,
+      v.fechaSeguimiento === undefined ? anterior.fechaSeguimiento : v.fechaSeguimiento,
       ahoraISO(),
       id,
     );

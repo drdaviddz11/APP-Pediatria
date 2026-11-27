@@ -93,6 +93,7 @@ Basada en [PROMPT_MAESTRO.md](PROMPT_MAESTRO.md). Cada fase termina con algo que
 - [x] Un solo documento por paciente: datos de contacto y últimas medidas arriba; visitas en orden con la nueva al final.
 - [x] Visita en texto libre con peso, talla y perímetro cefálico; receta en el mismo lugar (imprimir al guardar); borrador que no se pierde.
 - [x] Cada medicamento nuevo escrito en la receta ofrece «☆ Guardar como favorito».
+- [x] Cita de control después de la receta (atajos 1 semana … 6 meses), corregible el mismo día; alimenta los recordatorios de controles.
 - [x] Corrección de la visita solo el mismo día (migración 13: la visita ya se sincroniza como corregible); notas aclaratorias después.
 - [x] Corrección del nombre y el teléfono desde el expediente.
 - [x] Las citas de la agenda abren este documento y quedan completadas al guardar la visita.

@@ -13,7 +13,9 @@ import { agregarNota, corregirVisita, crearVisita, listarConsultas, listarNotas,
 import { vincularConsulta } from '../../../src/db/agenda';
 import { corregirDatosBasicos, obtenerPaciente } from '../../../src/db/pacientes';
 import { crearFavorito, crearReceta, indicacionesSinFavorito, listarFavoritos, PESO_MAXIMO, PESO_MINIMO, Receta, recetasDePaciente, usarFavorito, validarIndicaciones } from '../../../src/db/recetas';
-import { calcularEdad, deDate, leerFechaISO, textoEdad } from '../../../src/domain/fechas';
+import { sumarDias, sumarMeses } from '../../../src/agenda/tiempo';
+import { aISO, aTextoUsuario, calcularEdad, deDate, hoy, leerFechaISO, leerFechaUsuario, textoEdad } from '../../../src/domain/fechas';
+import { Pastilla } from '../../../src/ui/agenda';
 import type { Consulta, NotaAclaratoria, Paciente } from '../../../src/domain/types';
 import { leerNumero } from '../../../src/domain/validacion';
 import { usePlan } from '../../../src/plan/PlanProvider';
@@ -37,8 +39,10 @@ interface Borrador {
   pc: string;
   texto: string;
   receta: string;
+  /** Cita de control, DD/MM/AAAA. */
+  control: string;
 }
-const BORRADOR_VACIO: Borrador = { peso: '', talla: '', pc: '', texto: '', receta: '' };
+const BORRADOR_VACIO: Borrador = { peso: '', talla: '', pc: '', texto: '', receta: '', control: '' };
 /** Lo que se está escribiendo de la visita nueva no se pierde al ir a otra pantalla y volver. */
 const borradores = new Map<string, Borrador>();
 
@@ -48,6 +52,33 @@ function fechaVisita(iso: string): string {
   const dos = (n: number) => String(n).padStart(2, '0');
   const hora = d.getHours() % 12 === 0 ? 12 : d.getHours() % 12;
   return `${DIAS[d.getDay()]} ${dos(d.getDate())}/${dos(d.getMonth() + 1)}/${d.getFullYear()} · ${hora}:${dos(d.getMinutes())} ${d.getHours() < 12 ? 'a. m.' : 'p. m.'}`;
+}
+
+/** Atajos para la cita de control, contados desde hoy. */
+const CONTROLES: [string, (desde: string) => string][] = [
+  ['1 semana', (d) => sumarDias(d, 7)],
+  ['2 semanas', (d) => sumarDias(d, 14)],
+  ['1 mes', (d) => sumarMeses(d, 1)],
+  ['2 meses', (d) => sumarMeses(d, 2)],
+  ['3 meses', (d) => sumarMeses(d, 3)],
+  ['6 meses', (d) => sumarMeses(d, 6)],
+];
+
+/** Lee la cita de control escrita (DD/MM/AAAA): vacía = sin control. */
+function leerControl(t: string, desde: string = aISO(hoy())): { error: string } | { iso: string | null } {
+  if (!t.trim()) return { iso: null };
+  const f = leerFechaUsuario(t);
+  if (!f) return { error: 'Cita de control: escriba la fecha como DD/MM/AAAA.' };
+  const iso = aISO(f);
+  if (iso <= desde) return { error: 'La cita de control debe ser una fecha después de la visita.' };
+  return { iso };
+}
+
+/** "martes 04/12/2026" */
+function fechaControl(iso: string): string {
+  const f = leerFechaISO(iso);
+  if (!f) return iso;
+  return `${DIAS[new Date(f.anio, f.mes - 1, f.dia).getDay()]} ${aTextoUsuario(f)}`;
 }
 
 function texto0(n: number | null): string {
@@ -280,7 +311,14 @@ function BloqueVisita({
 }) {
   const db = useSQLiteContext();
   const [corrigiendo, setCorrigiendo] = useState(false);
-  const [b, setB] = useState({ peso: texto0(v.pesoKg), talla: texto0(v.tallaCm), pc: texto0(v.perimetroCefalicoCm), texto: v.texto });
+  const controlInicial = leerFechaISO(v.fechaSeguimiento);
+  const [b, setB] = useState({
+    peso: texto0(v.pesoKg),
+    talla: texto0(v.tallaCm),
+    pc: texto0(v.perimetroCefalicoCm),
+    texto: v.texto,
+    control: controlInicial ? aTextoUsuario(controlInicial) : '',
+  });
   const [conReceta, setConReceta] = useState(false);
   const [conNota, setConNota] = useState(false);
   const [nota, setNota] = useState('');
@@ -313,8 +351,13 @@ function BloqueVisita({
       Alert.alert('Visita', m.error);
       return;
     }
+    const c = leerControl(b.control, aISO(deDate(new Date(v.fechaHora))));
+    if ('error' in c) {
+      Alert.alert('Visita', c.error);
+      return;
+    }
     try {
-      await corregirVisita(db, v.id, { texto: b.texto, pesoKg: m.pesoKg, tallaCm: m.tallaCm, perimetroCefalicoCm: m.pc }, { edadMeses });
+      await corregirVisita(db, v.id, { texto: b.texto, pesoKg: m.pesoKg, tallaCm: m.tallaCm, perimetroCefalicoCm: m.pc, fechaSeguimiento: c.iso }, { edadMeses });
       setCorrigiendo(false);
       alCambiar();
     } catch (e) {
@@ -344,6 +387,7 @@ function BloqueVisita({
         <View style={{ gap: espacio.s }}>
           <CamposMedidas b={b} setB={(x) => setB((a) => ({ ...a, ...x }))} conPC={edadMeses != null && edadMeses < 36} />
           <Entrada valor={b.texto} alCambiar={(t) => setB((a) => ({ ...a, texto: t }))} multilinea placeholder="Escriba la visita" />
+          <CitaControl valor={b.control} alCambiar={(t) => setB((a) => ({ ...a, control: t }))} desde={aISO(deDate(new Date(v.fechaHora)))} />
           <FilaBotones guardar={() => void guardarCorreccion()} cancelar={() => setCorrigiendo(false)} />
         </View>
       ) : (
@@ -381,6 +425,10 @@ function BloqueVisita({
           ))}
         </View>
       ))}
+
+      {v.fechaSeguimiento && !corrigiendo && (
+        <Text style={s.control}>📅 Cita de control: {fechaControl(v.fechaSeguimiento)}</Text>
+      )}
 
       {conReceta ? (
         <EditorReceta
@@ -447,6 +495,11 @@ function NuevaVisita({
       Alert.alert('Visita', m.error);
       return;
     }
+    const c = leerControl(b.control);
+    if ('error' in c) {
+      Alert.alert('Visita', c.error);
+      return;
+    }
     const indicaciones = indicacionesDe(b.receta);
     if (conImpresion || indicaciones.length > 0) {
       const error = validarIndicaciones(indicaciones);
@@ -457,7 +510,7 @@ function NuevaVisita({
     }
     setGuardando(true);
     try {
-      const visita: VisitaEntrada = { texto: b.texto, pesoKg: m.pesoKg, tallaCm: m.tallaCm, perimetroCefalicoCm: m.pc };
+      const visita: VisitaEntrada = { texto: b.texto, pesoKg: m.pesoKg, tallaCm: m.tallaCm, perimetroCefalicoCm: m.pc, fechaSeguimiento: c.iso };
       const consultaId = await crearVisita(db, p.id, visita, { edadMeses });
       if (indicaciones.length > 0) {
         await crearReceta(db, { pacienteId: p.id, consultaId, indicaciones, pesoKg: m.pesoKg });
@@ -510,6 +563,8 @@ function NuevaVisita({
       ) : (
         <AvisoPro funcion="receta" compacto />
       )}
+
+      <CitaControl valor={b.control} alCambiar={(t) => setB({ control: t })} />
 
       <View style={{ gap: espacio.s, marginTop: espacio.m }}>
         {esPro && hayReceta && (
@@ -620,7 +675,7 @@ function Entrada({
   placeholder?: string;
   multilinea?: boolean;
   alto?: number;
-  teclado?: 'decimal-pad' | 'phone-pad';
+  teclado?: 'decimal-pad' | 'phone-pad' | 'numbers-and-punctuation';
   autoFocus?: boolean;
 }) {
   return (
@@ -653,6 +708,26 @@ function Favoritos({ favoritos, alElegir }: { favoritos: { id: string; texto: st
           </Text>
         </Pressable>
       ))}
+    </View>
+  );
+}
+
+/** Cita de control: fecha escrita o con un toque (1 semana, 1 mes…). La usan los recordatorios de controles. */
+function CitaControl({ valor, alCambiar, desde = aISO(hoy()) }: { valor: string; alCambiar: (t: string) => void; desde?: string }) {
+  const c = leerControl(valor, desde);
+  return (
+    <View style={{ gap: espacio.s, marginTop: espacio.m }}>
+      <Text style={s.visitaFecha}>📅 Cita de control</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {CONTROLES.map(([etiqueta, calcular]) => {
+          const f = leerFechaISO(calcular(desde));
+          const t = f ? aTextoUsuario(f) : '';
+          return <Pastilla key={etiqueta} texto={etiqueta} activa={valor === t} onPress={() => alCambiar(valor === t ? '' : t)} />;
+        })}
+      </View>
+      <Entrada valor={valor} alCambiar={alCambiar} placeholder="DD/MM/AAAA (vacío = sin control)" teclado="numbers-and-punctuation" />
+      {'iso' in c && c.iso && <Text style={s.mini}>Control el {fechaControl(c.iso)}. La app le recordará cuando se acerque.</Text>}
+      {'error' in c && <Text style={[s.mini, { color: colores.peligro }]}>{c.error}</Text>}
     </View>
   );
 }
@@ -756,6 +831,7 @@ const s = StyleSheet.create({
   nota: { fontSize: texto.pequeno, color: colores.texto, backgroundColor: colores.fondo, padding: espacio.s, borderRadius: radio.s, marginTop: 4 },
   receta: { borderTopWidth: 1, borderTopColor: colores.borde, marginTop: espacio.s, paddingTop: espacio.s, gap: 2 },
   mini: { fontSize: texto.mini, color: colores.textoSuave },
+  control: { fontSize: texto.normal, color: colores.texto, fontWeight: '600', marginTop: espacio.s },
   etiqueta: { fontSize: texto.pequeno, color: colores.textoSuave, marginBottom: 2 },
   filaMedidas: { flexDirection: 'row', gap: espacio.s, marginTop: espacio.s },
   entrada: {
