@@ -1,5 +1,7 @@
 // Hoja de la receta: el formato del Dr. Díaz (media carta horizontal, 8.5 × 5.5 pulgadas) con el nombre,
 // la fecha y las indicaciones escritos en los mismos lugares que en su plantilla de Word.
+// Se imprime en la MITAD DE ARRIBA de una hoja carta (8.5 × 11), el papel normal de cualquier impresora;
+// la mitad de abajo queda en blanco.
 // Sirve igual para imprimir desde el teléfono (expo-print) y desde la computadora (navegador).
 
 /** Posiciones medidas sobre la imagen de la plantilla (1753 × 1115 px), en % de la imagen. */
@@ -17,6 +19,8 @@ export const POS = {
 /** Hoja: media carta horizontal; la imagen ocupa el 96 % para no quedar en la orilla que la impresora no alcanza. */
 export const HOJA = { ancho: 8.5, alto: 5.5, imgAncho: 8.16 };
 export const IMG_ALTO = HOJA.imgAncho * (1115 / 1753);
+/** Papel donde se imprime: carta vertical; la receta ocupa la mitad de arriba. */
+export const PAPEL = { ancho: 8.5, alto: 11 };
 
 
 /** Nombre como va en la receta: nombres y apellidos. */
@@ -143,10 +147,10 @@ export function htmlReceta(d: DatosReceta): string {
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><title>Receta</title>
 <style>
-  @page { size: ${HOJA.ancho}in ${HOJA.alto}in; margin: 0; }
+  @page { size: ${PAPEL.ancho}in ${PAPEL.alto}in; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  .pagina { width: ${HOJA.ancho}in; height: ${HOJA.alto}in; position: relative; overflow: hidden; }
+  .pagina { width: ${PAPEL.ancho}in; height: ${PAPEL.alto}in; position: relative; overflow: hidden; }
   .hoja { position: absolute; left: ${(HOJA.ancho - HOJA.imgAncho) / 2}in; top: ${(HOJA.alto - IMG_ALTO) / 2}in;
           width: ${HOJA.imgAncho}in; height: ${IMG_ALTO}in; }
   .hoja img { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -169,5 +173,5 @@ export function htmlReceta(d: DatosReceta): string {
 <body>${paginas}</body></html>`;
 }
 
-/** Tamaño de la hoja en puntos (72 por pulgada), para expo-print. */
-export const TAMANO_HOJA_PT = { ancho: HOJA.ancho * 72, alto: HOJA.alto * 72 };
+/** Tamaño del papel en puntos (72 por pulgada), para expo-print: carta vertical. */
+export const TAMANO_HOJA_PT = { ancho: PAPEL.ancho * 72, alto: PAPEL.alto * 72 };
